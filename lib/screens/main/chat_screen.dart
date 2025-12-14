@@ -144,7 +144,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              color: Colors.redAccent.withAlpha(25),
+                              color: Colors.redAccent.withValues(
+                                alpha: 25 / 255,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -206,12 +208,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[850]?.withAlpha(128)
+                          ? Colors.grey[850]?.withValues(alpha: 128 / 255)
                           : Colors.grey[200],
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[800]!.withAlpha(102)
+                            ? Colors.grey[800]!.withValues(alpha: 102 / 255)
                             : Colors.grey[300]!,
                         width: 1,
                       ),
@@ -231,9 +233,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: InputDecoration(
                         hintText: 'Ask VietSpots...',
                         hintStyle: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.color?.withAlpha(128),
+                          color: Theme.of(context).textTheme.bodyLarge?.color
+                              ?.withValues(alpha: 128 / 255),
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -256,7 +257,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.redAccent.withAlpha(77),
+                        color: Colors.redAccent.withValues(alpha: 77 / 255),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),

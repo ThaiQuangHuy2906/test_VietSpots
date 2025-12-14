@@ -46,7 +46,7 @@ class _MainScreenState extends State<MainScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.redAccent.withAlpha(40),
+                color: Colors.redAccent.withValues(alpha: 40 / 255),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

@@ -282,8 +282,8 @@ class SettingsScreen extends StatelessWidget {
           : Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (iconColor ?? Theme.of(context).primaryColor).withAlpha(
-                  26,
+                color: (iconColor ?? Theme.of(context).primaryColor).withValues(
+                  alpha: 25 / 255,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),

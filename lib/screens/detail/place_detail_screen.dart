@@ -134,7 +134,7 @@ class PlaceDetailScreen extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withAlpha(25),
+                          color: Colors.amber.withValues(alpha: 25 / 255),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -335,7 +335,7 @@ class PlaceDetailScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.redAccent.withAlpha(40),
+              color: Colors.redAccent.withValues(alpha: 40 / 255),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

@@ -32,7 +32,7 @@ class PlaceCard extends StatelessWidget {
           border: isDark ? Border.all(color: Colors.white24, width: 1) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(20),
+              color: Colors.black.withValues(alpha: 20 / 255),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -71,7 +71,7 @@ class PlaceCard extends StatelessWidget {
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
                         colors: [
-                          Colors.black.withAlpha(89),
+                          Colors.black.withValues(alpha: 89 / 255),
                           Colors.transparent,
                         ],
                       ),

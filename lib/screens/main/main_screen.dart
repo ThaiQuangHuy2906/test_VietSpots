@@ -32,17 +32,33 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
-        },
-        backgroundColor: Colors.redAccent,
-        shape: const CircleBorder(),
-        elevation: 4.0,
-        child: const Icon(Icons.chat_bubble, color: Colors.white),
+      floatingActionButton: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Colors.redAccent, Colors.pinkAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.redAccent.withAlpha(77),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatScreen()),
+            );
+          },
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
@@ -51,13 +67,13 @@ class _MainScreenState extends State<MainScreen> {
         child: SizedBox(
           height: 60,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(Icons.home, 'Home', 0),
-              _buildNavItem(Icons.notifications, 'Notify', 1),
+              Expanded(child: _buildNavItem(Icons.home, 'Home', 0)),
+              Expanded(child: _buildNavItem(Icons.notifications, 'Notify', 1)),
               const SizedBox(width: 40), // Space for FAB
-              _buildNavItem(Icons.favorite, 'Favorites', 2),
-              _buildNavItem(Icons.settings, 'Settings', 3),
+              Expanded(child: _buildNavItem(Icons.favorite, 'Favorites', 2)),
+              Expanded(child: _buildNavItem(Icons.settings, 'Settings', 3)),
             ],
           ),
         ),

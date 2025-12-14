@@ -34,6 +34,7 @@ class AppTheme {
     brightness: Brightness.dark,
     primaryColor: primaryRed,
     scaffoldBackgroundColor: backgroundDark,
+    cardColor: const Color(0xFF1E1E1E),
     colorScheme: const ColorScheme.dark(
       primary: primaryRed,
       secondary: accentYellow,

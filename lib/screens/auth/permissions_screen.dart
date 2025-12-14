@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
-import 'package:vietspots/providers/auth_provider.dart';
 
 class PermissionsScreen extends StatefulWidget {
   const PermissionsScreen({super.key});
@@ -81,7 +79,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     }
 
     if (mounted) {
-      print('Navigating to Home...');
+      debugPrint('Navigating to Home...');
       // Use pushNamedAndRemoveUntil to clear the back stack (Login, Register, etc.)
       Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
     }

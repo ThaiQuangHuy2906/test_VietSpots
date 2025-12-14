@@ -47,46 +47,77 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Search places...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
+        backgroundColor: Colors.redAccent,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+        ),
+        title: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
           ),
-          style: const TextStyle(color: Colors.white),
-          onChanged: _filterPlaces,
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Search places...',
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              hintStyle: TextStyle(color: Colors.grey),
+            ),
+            style: const TextStyle(color: Colors.black),
+            onChanged: _filterPlaces,
+          ),
         ),
       ),
-      body: ListView.builder(
-        itemCount: _filteredPlaces.length,
-        itemBuilder: (context, index) {
-          final place = _filteredPlaces[index];
-          return ListTile(
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                place.imageUrl,
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.image_not_supported),
+      body: Container(
+        color: Colors.red[50],
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _filteredPlaces.length,
+          itemBuilder: (context, index) {
+            final place = _filteredPlaces[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            title: Text(place.name),
-            subtitle: Text(place.location),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PlaceDetailScreen(place: place),
+              elevation: 2,
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(16),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    place.imageUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.image_not_supported, size: 40),
+                  ),
                 ),
-              );
-            },
-          );
-        },
+                title: Text(
+                  place.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  place.location,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PlaceDetailScreen(place: place),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

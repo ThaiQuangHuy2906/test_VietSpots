@@ -24,6 +24,11 @@ class ChatProvider with ChangeNotifier {
     });
   }
 
+  void clearMessages() {
+    _messages.clear();
+    notifyListeners();
+  }
+
   void _generateBotResponse(String userText) {
     String botText = "I'm sorry, I didn't understand that.";
     List<dynamic>? places;

@@ -38,8 +38,8 @@ class NotificationScreen extends StatelessWidget {
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: isUnread
-                  ? Colors.red.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
+                  ? const Color.fromRGBO(255, 0, 0, 0.1)
+                  : const Color.fromRGBO(158, 158, 158, 0.1),
               child: Icon(
                 isUnread
                     ? Icons.notifications_active

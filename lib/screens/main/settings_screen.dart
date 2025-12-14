@@ -31,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 50,
                     backgroundImage: NetworkImage(user.avatarUrl ?? ''),
-                    onBackgroundImageError: (_, __) {},
+                    onBackgroundImageError: (_, _) {},
                     child: user.avatarUrl == null
                         ? const Icon(Icons.person, size: 50)
                         : null,
@@ -242,7 +242,7 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color.fromRGBO(0, 0, 0, 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -265,7 +265,7 @@ class SettingsScreen extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (iconColor ?? Theme.of(context).primaryColor).withOpacity(0.1),
+          color: (iconColor ?? Theme.of(context).primaryColor).withAlpha(26),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),

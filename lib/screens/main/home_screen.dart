@@ -34,6 +34,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.search, color: Colors.grey),
                     const SizedBox(width: 8),
@@ -71,7 +72,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: Text(
         title,
         style: Theme.of(

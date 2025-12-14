@@ -16,13 +16,39 @@ class FavoritesScreen extends StatelessWidget {
           final favorites = placeProvider.favoritePlaces;
 
           if (favorites.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.favorite_border, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('No favorites yet', style: TextStyle(color: Colors.grey)),
+                  const Icon(
+                    Icons.favorite_border,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No favorites yet',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacementNamed('/home');
+                    },
+                    icon: const Icon(Icons.explore),
+                    label: const Text('Explore Places'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -35,7 +61,9 @@ class FavoritesScreen extends StatelessWidget {
               final place = favorites[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 4,
                 child: InkWell(
                   onTap: () {
@@ -58,8 +86,10 @@ class FavoritesScreen extends StatelessWidget {
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
-                            errorWidget: (context, url, error) =>
-                                Container(color: Colors.grey[300], child: const Icon(Icons.error)),
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.error),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -77,7 +107,11 @@ class FavoritesScreen extends StatelessWidget {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.star, color: Colors.amber, size: 16),
+                                  const Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(place.rating.toString()),
                                 ],
@@ -85,7 +119,10 @@ class FavoritesScreen extends StatelessWidget {
                               const SizedBox(height: 4),
                               Text(
                                 place.location,
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -93,7 +130,10 @@ class FavoritesScreen extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
                           onPressed: () {
                             placeProvider.toggleFavorite(place.id);
                           },

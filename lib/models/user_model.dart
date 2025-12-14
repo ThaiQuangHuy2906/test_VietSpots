@@ -23,7 +23,7 @@ class UserModel {
     String? companionType,
   }) {
     return UserModel(
-      id: this.id,
+      id: id,
       name: name ?? this.name,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,

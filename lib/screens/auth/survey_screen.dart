@@ -48,7 +48,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             Text('Religion', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedReligion,
+              initialValue: _selectedReligion,
               items: _religions.map((r) {
                 return DropdownMenuItem(value: r, child: Text(r));
               }).toList(),

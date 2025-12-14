@@ -32,46 +32,49 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
-      floatingActionButton: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Colors.redAccent, Colors.pinkAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.redAccent.withAlpha(77),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Colors.redAccent, Colors.pinkAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ChatScreen()),
-            );
-          },
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.redAccent.withAlpha(40),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.smart_toy, color: Colors.white, size: 30),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+            },
+          ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
+        shape: null,
+        notchMargin: 0,
+        elevation: 8,
         child: SizedBox(
-          height: 60,
+          height: 64,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Expanded(child: _buildNavItem(Icons.home, 'Home', 0)),
               Expanded(child: _buildNavItem(Icons.notifications, 'Notify', 1)),
-              const SizedBox(width: 40), // Space for FAB
               Expanded(child: _buildNavItem(Icons.favorite, 'Favorites', 2)),
               Expanded(child: _buildNavItem(Icons.settings, 'Settings', 3)),
             ],
@@ -87,15 +90,19 @@ class _MainScreenState extends State<MainScreen> {
       onTap: () => _onItemTapped(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             icon,
+            size: 26,
             color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
           ),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
             ),
           ),

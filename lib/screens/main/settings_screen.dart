@@ -4,6 +4,7 @@ import 'package:vietspots/providers/auth_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
 import 'package:vietspots/providers/theme_provider.dart';
 import 'package:vietspots/screens/settings/settings_tree.dart';
+import 'package:vietspots/utils/typography.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -18,8 +19,17 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(locProvider.translate('settings')),
-        elevation: 0,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.redAccent,
+        elevation: Theme.of(context).brightness == Brightness.dark ? 0 : 0,
+        title: Text(
+          locProvider.translate('settings'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -39,16 +49,16 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     user.name,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    style: AppTypography.titleLarge.copyWith(
+                      color: AppTextColors.primary(context),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     user.email,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppTextColors.secondary(context),
+                    ),
                   ),
                 ],
               ),
@@ -261,15 +271,27 @@ class SettingsScreen extends StatelessWidget {
     Color? titleColor,
     Color? iconColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (iconColor ?? Theme.of(context).primaryColor).withAlpha(26),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
-      ),
+      leading: isDark
+          ? Icon(
+              icon,
+              color: iconColor ?? Theme.of(context).primaryColor,
+              size: 28,
+            )
+          : Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (iconColor ?? Theme.of(context).primaryColor).withAlpha(
+                  26,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor ?? Theme.of(context).primaryColor,
+              ),
+            ),
       title: Text(
         title,
         style: TextStyle(fontWeight: FontWeight.w500, color: titleColor),

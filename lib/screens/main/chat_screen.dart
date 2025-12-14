@@ -44,19 +44,24 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'VietSpots',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.redAccent,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
+            icon: const Icon(Icons.close, color: Colors.white),
             onPressed: () => Navigator.pop(context),
             tooltip: 'Close Chat',
           ),
@@ -126,19 +131,62 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 16), // Padding top
+          const SizedBox(height: 16),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: chatProvider.messages.length + (_isTyping ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == chatProvider.messages.length && _isTyping) {
-                  return _buildTypingIndicator();
-                }
-                final msg = chatProvider.messages[index];
-                return _buildMessageBubble(msg);
-              },
-            ),
+            child: chatProvider.messages.isEmpty && !_isTyping
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 80.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withAlpha(25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.smart_toy,
+                              size: 40,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Xin chào Glory H! 👋',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tôi là trợ lý ảo VietSpots.\nBạn cần tìm địa điểm nào?',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount:
+                        chatProvider.messages.length + (_isTyping ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == chatProvider.messages.length && _isTyping) {
+                        return _buildTypingIndicator();
+                      }
+                      final msg = chatProvider.messages[index];
+                      return _buildMessageBubble(msg);
+                    },
+                  ),
           ),
           Container(
             padding: const EdgeInsets.all(16.0),
@@ -158,12 +206,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[800]
-                          : Colors.grey[50],
-                      borderRadius: BorderRadius.circular(25),
+                          ? Colors.grey[850]?.withAlpha(128)
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[600]!
+                            ? Colors.grey[800]!.withAlpha(102)
                             : Colors.grey[300]!,
                         width: 1,
                       ),
@@ -337,6 +385,16 @@ class _ChatScreenState extends State<ChatScreen> {
                       fontSize: 16,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatTimestamp(msg.timestamp),
+                    style: TextStyle(
+                      color: isUser
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : Colors.grey[600],
+                      fontSize: 11,
+                    ),
+                  ),
                   if (msg.relatedPlaces != null &&
                       msg.relatedPlaces!.isNotEmpty)
                     Padding(
@@ -366,5 +424,20 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
   }
 }

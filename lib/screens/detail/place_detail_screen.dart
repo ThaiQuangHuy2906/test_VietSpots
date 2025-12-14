@@ -23,19 +23,19 @@ class PlaceDetailScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.blue[200]!, width: 1),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: Colors.blue[700]),
+          Icon(icon, size: 18, color: Colors.redAccent),
           const SizedBox(width: 8),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.blue[700],
+            style: const TextStyle(
+              color: Colors.black87,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
@@ -195,26 +195,105 @@ class PlaceDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[800]
-                          : Colors.grey[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
+                  GestureDetector(
+                    onTap: _openMap,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 20,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            height: 180,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[100],
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Background pattern - Google Maps Static API
+                                Opacity(
+                                  opacity: 1.0,
+                                  child: Image.network(
+                                    'https://maps.googleapis.com/maps/api/staticmap?center=${place.latitude},${place.longitude}&zoom=16&size=600x300&markers=color:red%7C${place.latitude},${place.longitude}&key=AIzaSyDummyKey&style=feature:poi|visibility:off&style=feature:transit|visibility:off',
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    errorBuilder:
+                                        (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) => Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            image: const DecorationImage(
+                                              image: NetworkImage(
+                                                'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=400',
+                                              ),
+                                              fit: BoxFit.cover,
+                                              opacity: 0.15,
+                                            ),
+                                          ),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.location_on,
+                                              color: Colors.redAccent,
+                                              size: 60,
+                                            ),
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            place.location,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[800]
+                                : Colors.grey[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Colors.redAccent,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  place.location,
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.w500),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -229,12 +308,12 @@ class PlaceDetailScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     place.description,
                     style: Theme.of(
                       context,
-                    ).textTheme.bodyLarge?.copyWith(height: 1.6),
+                    ).textTheme.bodyLarge?.copyWith(height: 1.8, fontSize: 15),
                   ),
                   const SizedBox(height: 100), // Space for FAB
                 ],
@@ -244,19 +323,43 @@ class PlaceDetailScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.symmetric(horizontal: 20),
         width: double.infinity,
-        child: FloatingActionButton.extended(
-          onPressed: _openMap,
-          icon: const Icon(Icons.explore),
-          label: const Text(
-            'Explore Now',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Colors.redAccent, Colors.red],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          backgroundColor: Colors.redAccent,
-          elevation: 8,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.redAccent.withAlpha(40),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: MaterialButton(
+          onPressed: _openMap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.explore, color: Colors.white, size: 22),
+              SizedBox(width: 8),
+              Text(
+                'Get Directions',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
         ),
       ),

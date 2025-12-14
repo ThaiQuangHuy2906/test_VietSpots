@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:vietspots/models/place_model.dart';
 import 'package:vietspots/screens/detail/place_detail_screen.dart';
+import 'package:vietspots/utils/typography.dart';
 
 class PlaceCard extends StatelessWidget {
   final Place place;
@@ -31,9 +32,9 @@ class PlaceCard extends StatelessWidget {
           border: isDark ? Border.all(color: Colors.white24, width: 1) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(38),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              color: Colors.black.withAlpha(20),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -89,10 +90,10 @@ class PlaceCard extends StatelessWidget {
                   // TITLE
                   Text(
                     place.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.titleMedium.copyWith(
                       fontSize: 17,
                       height: 1.2,
+                      color: AppTextColors.primary(context),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -103,15 +104,19 @@ class PlaceCard extends StatelessWidget {
                   // RATING + REVIEWS
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 18),
+                      const Icon(
+                        Icons.star,
+                        color: Color(0xFFFFB300),
+                        size: 18,
+                      ),
 
                       const SizedBox(width: 6),
 
                       Text(
                         place.rating.toString(),
-                        style: const TextStyle(
+                        style: AppTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.w500,
-                          fontSize: 14,
+                          color: AppTextColors.primary(context),
                         ),
                       ),
 
@@ -119,14 +124,18 @@ class PlaceCard extends StatelessWidget {
 
                       Text(
                         "•",
-                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppTextColors.tertiary(context),
+                        ),
                       ),
 
                       const SizedBox(width: 6),
 
                       Text(
                         '${place.commentCount} reviews',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppTextColors.secondary(context),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

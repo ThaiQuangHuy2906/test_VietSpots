@@ -15,7 +15,8 @@ class MockDataService {
     Place(
       id: 'p1',
       name: 'Landmark 81',
-      imageUrl: 'https://picsum.photos/seed/p1/400/300',
+      imageUrl:
+          'https://images.unsplash.com/photo-1582192730841-2a682d7375f9?w=400',
       rating: 4.8,
       location: 'Binh Thanh, HCMC',
       description:

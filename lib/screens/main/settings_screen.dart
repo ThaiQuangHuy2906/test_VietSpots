@@ -65,12 +65,15 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 32),
-          _buildSectionHeader(context, 'Personal Information'),
+          _buildSectionHeader(
+            context,
+            locProvider.translate('settings_section_personal_information'),
+          ),
           _buildSettingsCard(context, [
             _buildSettingsTile(
               context,
               icon: Icons.person_outline,
-              title: 'General Information',
+              title: locProvider.translate('general_information'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -82,7 +85,7 @@ class SettingsScreen extends StatelessWidget {
             _buildSettingsTile(
               context,
               icon: Icons.lock_outline,
-              title: 'Private Information',
+              title: locProvider.translate('private_information'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -92,12 +95,15 @@ class SettingsScreen extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 24),
-          _buildSectionHeader(context, 'Security & Permissions'),
+          _buildSectionHeader(
+            context,
+            locProvider.translate('settings_section_security_permissions'),
+          ),
           _buildSettingsCard(context, [
             _buildSettingsTile(
               context,
               icon: Icons.password,
-              title: 'Change Password',
+              title: locProvider.translate('change_password'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -109,7 +115,7 @@ class SettingsScreen extends StatelessWidget {
             _buildSettingsTile(
               context,
               icon: Icons.security_outlined,
-              title: 'Permissions',
+              title: locProvider.translate('permissions'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -119,7 +125,10 @@ class SettingsScreen extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 24),
-          _buildSectionHeader(context, 'General'),
+          _buildSectionHeader(
+            context,
+            locProvider.translate('settings_section_general'),
+          ),
           _buildSettingsCard(context, [
             _buildSettingsTile(
               context,
@@ -143,12 +152,15 @@ class SettingsScreen extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 24),
-          _buildSectionHeader(context, 'About'),
+          _buildSectionHeader(
+            context,
+            locProvider.translate('settings_section_about'),
+          ),
           _buildSettingsCard(context, [
             _buildSettingsTile(
               context,
               icon: Icons.help_outline,
-              title: 'Help Center',
+              title: locProvider.translate('help_center'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -160,7 +172,7 @@ class SettingsScreen extends StatelessWidget {
             _buildSettingsTile(
               context,
               icon: Icons.policy_outlined,
-              title: 'Legal Policy',
+              title: locProvider.translate('legal_policy'),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(

@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 shape: BoxShape.circle,
               ),
               child: Image.asset(
-                'assets/icons/VietSpots_app_icon.png',
+                'assets/icons/vietspots_full_icon.png',
                 width: 80,
                 height: 80,
                 fit: BoxFit.contain,

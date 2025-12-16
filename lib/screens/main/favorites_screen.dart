@@ -57,7 +57,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Start exploring and save your\nfavorite places here',
+                      loc.translate('favorites_empty_hint'),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppTextColors.secondary(context),

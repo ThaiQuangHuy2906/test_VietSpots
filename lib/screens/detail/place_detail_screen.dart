@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:provider/provider.dart';
@@ -42,144 +43,22 @@ class PlaceDetailScreen extends StatelessWidget {
   }
 
   void _showAddComment(BuildContext context) async {
-    final loc = Provider.of<LocalizationProvider>(context, listen: false);
-    final TextEditingController ctrl = TextEditingController();
-    int rating = 5;
-    XFile? image;
-    Uint8List? imageBytes;
-    bool showError = false;
-    final picker = ImagePicker();
-
-    showDialog<void>(
+    // Use a draggable modal bottom sheet instead of a Dialog.
+    // Reason: on Android, Dialog + keyboard often causes bottom overflow or
+    // hidden actions on small screens / large text sizes. The sheet + scroll
+    // controller is more resilient and easier to debug.
+    showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (dialogContext, setState) {
-            return Dialog(
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: 16 + MediaQuery.of(ctx).viewInsets.bottom,
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        loc.translate('add_review'),
-                        style: Theme.of(ctx).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          for (int i = 1; i <= 5; i++)
-                            IconButton(
-                              onPressed: () => setState(() => rating = i),
-                              icon: Icon(
-                                i <= rating ? Icons.star : Icons.star_border,
-                                color: Colors.amber,
-                              ),
-                            ),
-                        ],
-                      ),
-                      TextField(
-                        controller: ctrl,
-                        decoration: InputDecoration(
-                          hintText: loc.translate('review_hint'),
-                          errorText: showError
-                              ? loc.translate('review_required')
-                              : null,
-                        ),
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          ElevatedButton(
-                            onPressed: () async {
-                              final picked = await picker.pickImage(
-                                source: ImageSource.gallery,
-                                imageQuality: 70,
-                              );
-                              if (picked == null) return;
-                              final bytes = await picked.readAsBytes();
-                              setState(() {
-                                image = picked;
-                                imageBytes = bytes;
-                              });
-                            },
-                            child: Text(loc.translate('attach_image')),
-                          ),
-                          const SizedBox(width: 12),
-                          if (imageBytes != null)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(
-                                imageBytes!,
-                                width: 56,
-                                height: 56,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: Text(loc.translate('cancel')),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (ctrl.text.trim().isEmpty) {
-                                  setState(() => showError = true);
-                                  return;
-                                }
-
-                                final comment = PlaceComment(
-                                  id: DateTime.now().millisecondsSinceEpoch
-                                      .toString(),
-                                  author: 'You',
-                                  rating: rating,
-                                  text: ctrl.text.trim(),
-                                  imagePath: image?.path,
-                                  timestamp: DateTime.now(),
-                                );
-                                Provider.of<PlaceProvider>(
-                                  context,
-                                  listen: false,
-                                ).addComment(place.id, comment);
-                                Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      loc.translate('review_added'),
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(loc.translate('submit')),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor:
+          Theme.of(context).dialogTheme.backgroundColor ??
+          Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) =>
+          _AddReviewBottomSheet(placeId: place.id, rootContext: context),
     );
   }
 
@@ -240,7 +119,8 @@ class PlaceDetailScreen extends StatelessWidget {
                   CachedNetworkImage(
                     imageUrl: place.imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(color: Colors.grey[300]),
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey[300]),
                   ),
                   Container(color: Colors.black26),
                 ],
@@ -262,8 +142,8 @@ class PlaceDetailScreen extends StatelessWidget {
                         SnackBar(
                           content: Text(
                             isFav
-                                ? 'Removed from Favorites'
-                                : 'Added to Favorites',
+                                ? loc.translate('removed_from_favorites')
+                                : loc.translate('added_to_favorites'),
                           ),
                           duration: const Duration(seconds: 1),
                         ),
@@ -322,7 +202,7 @@ class PlaceDetailScreen extends StatelessWidget {
                               ? p.comments.length
                               : p.commentCount;
                           return Text(
-                            '($reviewCount reviews)',
+                            '($reviewCount ${loc.translate('reviews')})',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.grey[600]),
                           );
@@ -334,7 +214,7 @@ class PlaceDetailScreen extends StatelessWidget {
 
                   // Highlights
                   Text(
-                    'Highlights',
+                    loc.translate('highlights'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -521,7 +401,7 @@ class PlaceDetailScreen extends StatelessWidget {
                               ? p.comments.length
                               : p.commentCount;
                           return Text(
-                            '($reviewCount reviews)',
+                            '($reviewCount ${loc.translate('reviews')})',
                             style: Theme.of(context).textTheme.bodySmall,
                           );
                         },
@@ -536,10 +416,12 @@ class PlaceDetailScreen extends StatelessWidget {
                         (e) => e.id == place.id,
                         orElse: () => place,
                       );
-                      if (p.comments.isEmpty)
+                      if (p.comments.isEmpty) {
                         return Text(loc.translate('no_reviews_yet'));
+                      }
                       return Column(
                         children: p.comments.reversed.map((c) {
+                          final imagePath = c.imagePath;
                           return ListTile(
                             leading: CircleAvatar(
                               child: Text(
@@ -556,7 +438,29 @@ class PlaceDetailScreen extends StatelessWidget {
                                   ),
                               ],
                             ),
-                            subtitle: Text(c.text),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(c.text),
+                                if (imagePath != null &&
+                                    imagePath.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.file(
+                                      File(imagePath),
+                                      height: 160,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return const SizedBox.shrink();
+                                          },
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           );
                         }).toList(),
                       );
@@ -569,6 +473,201 @@ class PlaceDetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AddReviewBottomSheet extends StatefulWidget {
+  const _AddReviewBottomSheet({
+    required this.placeId,
+    required this.rootContext,
+  });
+
+  final String placeId;
+  final BuildContext rootContext;
+
+  @override
+  State<_AddReviewBottomSheet> createState() => _AddReviewBottomSheetState();
+}
+
+class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+
+  int _rating = 5;
+  XFile? _image;
+  Uint8List? _imageBytes;
+  bool _showError = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    // Keep a small square preview thumbnail to avoid layout jumps.
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+    if (!mounted || picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _image = picked;
+      _imageBytes = bytes;
+    });
+  }
+
+  void _submit() {
+    final loc = Provider.of<LocalizationProvider>(context, listen: false);
+    if (_controller.text.trim().isEmpty) {
+      setState(() => _showError = true);
+      return;
+    }
+
+    final comment = PlaceComment(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      author: 'You',
+      rating: _rating,
+      text: _controller.text.trim(),
+      imagePath: _image?.path,
+      timestamp: DateTime.now(),
+    );
+
+    Provider.of<PlaceProvider>(
+      context,
+      listen: false,
+    ).addComment(widget.placeId, comment);
+
+    Navigator.pop(context);
+    // Use the original page context for SnackBar.
+    // The bottom sheet context is disposed immediately after pop.
+    if (widget.rootContext.mounted) {
+      ScaffoldMessenger.of(
+        widget.rootContext,
+      ).showSnackBar(SnackBar(content: Text(loc.translate('review_added'))));
+    }
+  }
+
+  Widget _buildStar(int i) {
+    final selected = i <= _rating;
+    return IconButton(
+      onPressed: () => setState(() => _rating = i),
+      icon: Icon(
+        selected ? Icons.star : Icons.star_border,
+        color: Colors.amber,
+      ),
+      tooltip: '$i',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = Provider.of<LocalizationProvider>(context);
+    final viewInsets = MediaQuery.of(context).viewInsets;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      // Lift the whole sheet above the keyboard to prevent overflow.
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.72,
+        minChildSize: 0.55,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  loc.translate('add_review'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Row(children: [for (int i = 1; i <= 5; i++) _buildStar(i)]),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: EdgeInsets.zero,
+                    children: [
+                      TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          hintText: loc.translate('review_hint'),
+                          errorText: _showError
+                              ? loc.translate('review_required')
+                              : null,
+                          border: const OutlineInputBorder(),
+                        ),
+                        minLines: 4,
+                        maxLines: 6,
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: ElevatedButton(
+                          onPressed: _pickImage,
+                          child: Text(loc.translate('attach_image')),
+                        ),
+                      ),
+                      if (_imageBytes != null) ...[
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            _imageBytes!,
+                            width: 72,
+                            height: 72,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(loc.translate('cancel')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          child: Text(loc.translate('submit')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

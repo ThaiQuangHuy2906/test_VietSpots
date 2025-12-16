@@ -6,6 +6,7 @@ import 'package:vietspots/providers/auth_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
 import 'package:vietspots/screens/auth/survey_screen.dart';
 import 'package:vietspots/utils/avatar_image_provider.dart';
+import 'package:vietspots/widgets/avatar_crop_dialog.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -37,12 +38,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+
+    final croppedPath = await showAvatarCropDialog(
+      context: context,
+      imageBytes: bytes,
+    );
+    if (croppedPath == null || croppedPath.trim().isEmpty) return;
+
     // Store local path (or blob url on web) into `avatarUrl`.
     if (mounted) {
       Provider.of<AuthProvider>(
         context,
         listen: false,
-      ).updateProfile(avatarUrl: picked.path);
+      ).updateProfile(avatarUrl: croppedPath);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -87,8 +97,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(loc.translate('edit_profile'))),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            24 + MediaQuery.of(context).viewInsets.bottom,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -161,7 +176,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   height: 50,

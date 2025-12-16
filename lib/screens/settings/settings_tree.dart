@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:vietspots/providers/auth_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
 import 'package:vietspots/utils/avatar_image_provider.dart';
+import 'package:vietspots/widgets/avatar_crop_dialog.dart';
 
 // --- Section 1: Personal Information ---
 
@@ -53,11 +54,20 @@ class _GeneralInfoScreenState extends State<GeneralInfoScreen> {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+
+    final croppedPath = await showAvatarCropDialog(
+      context: context,
+      imageBytes: bytes,
+    );
+    if (croppedPath == null || croppedPath.trim().isEmpty) return;
+
     if (mounted) {
       Provider.of<AuthProvider>(
         context,
         listen: false,
-      ).updateProfile(avatarUrl: picked.path);
+      ).updateProfile(avatarUrl: croppedPath);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -240,6 +250,8 @@ class PrivateInfoScreen extends StatelessWidget {
             ),
           ),
           ListTile(
+            // NOTE: Use consistent i18n keys (lowercase) so the string updates
+            // when the user switches language.
             title: Text(loc.translate('culture')),
             subtitle: Text(loc.translate('culture_subtitle')),
             trailing: const Icon(Icons.chevron_right),
@@ -781,8 +793,9 @@ class _PermissionsScreenSettingsState extends State<PermissionsScreenSettings> {
                 return;
               }
               final granted = await _request(Permission.locationWhenInUse);
+              if (!context.mounted) return;
               setState(() => _location = granted);
-              if (!granted && mounted) {
+              if (!granted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(loc.translate('location_permission_denied')),
@@ -800,8 +813,9 @@ class _PermissionsScreenSettingsState extends State<PermissionsScreenSettings> {
                 return;
               }
               final granted = await _request(Permission.notification);
+              if (!context.mounted) return;
               setState(() => _notification = granted);
-              if (!granted && mounted) {
+              if (!granted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -821,8 +835,9 @@ class _PermissionsScreenSettingsState extends State<PermissionsScreenSettings> {
                 return;
               }
               final granted = await _request(Permission.photos);
+              if (!context.mounted) return;
               setState(() => _gallery = granted);
-              if (!granted && mounted) {
+              if (!granted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(loc.translate('photo_permission_denied')),
@@ -852,10 +867,26 @@ class LanguageScreen extends StatelessWidget {
         children: [
           ListView(
             children: [
-              _buildLangTile(context, 'English', 'en'),
-              _buildLangTile(context, 'Tiếng Việt', 'vi'),
-              _buildLangTile(context, 'Русский', 'ru'),
-              _buildLangTile(context, '中文', 'zh'),
+              _buildLangTile(
+                context,
+                locProvider.translate('language_english'),
+                'en',
+              ),
+              _buildLangTile(
+                context,
+                locProvider.translate('language_vietnamese'),
+                'vi',
+              ),
+              _buildLangTile(
+                context,
+                locProvider.translate('language_russian'),
+                'ru',
+              ),
+              _buildLangTile(
+                context,
+                locProvider.translate('language_chinese'),
+                'zh',
+              ),
             ],
           ),
           if (locProvider.isLoading)
@@ -899,18 +930,11 @@ class HelpCenterScreen extends StatelessWidget {
     final loc = Provider.of<LocalizationProvider>(context);
     return Scaffold(
       appBar: AppBar(title: Text(loc.translate('help_center'))),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Text(
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-          'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '
-          'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris '
-          'nisi ut aliquip ex ea commodo consequat.\n\n'
-          'Duis aute irure dolor in reprehenderit in voluptate velit esse '
-          'cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat '
-          'cupidatat non proident, sunt in culpa qui officia deserunt mollit '
-          'anim id est laborum.',
-          style: TextStyle(fontSize: 16, height: 1.5),
+          loc.translate('help_center_body'),
+          style: const TextStyle(fontSize: 16, height: 1.5),
         ),
       ),
     );
@@ -925,18 +949,11 @@ class LegalPolicyScreen extends StatelessWidget {
     final loc = Provider.of<LocalizationProvider>(context);
     return Scaffold(
       appBar: AppBar(title: Text(loc.translate('legal_policy'))),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Text(
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-          'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '
-          'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris '
-          'nisi ut aliquip ex ea commodo consequat.\n\n'
-          'Duis aute irure dolor in reprehenderit in voluptate velit esse '
-          'cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat '
-          'cupidatat non proident, sunt in culpa qui officia deserunt mollit '
-          'anim id est laborum.',
-          style: TextStyle(fontSize: 16, height: 1.5),
+          loc.translate('legal_policy_body'),
+          style: const TextStyle(fontSize: 16, height: 1.5),
         ),
       ),
     );

@@ -185,6 +185,8 @@ class _ChatScreenState extends State<ChatScreen> {
                               },
                             );
 
+                            if (!context.mounted) return;
+
                             if (choice == 'open') {
                               Navigator.pop(context);
                               Provider.of<ChatProvider>(

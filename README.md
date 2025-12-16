@@ -234,7 +234,7 @@ See `pubspec.yaml` for complete list of dependencies.
 
 1. **Android**: Add to `android/app/build.gradle`:
    ```gradle
-   android {
+   android {   
        defaultConfig {
            minSdkVersion 21
            targetSdkVersion 34

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:vietspots/providers/localization_provider.dart';
 import 'package:vietspots/screens/main/notification_detail_screen.dart';
 import 'package:vietspots/utils/typography.dart';
 
@@ -7,23 +9,24 @@ class NotificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = Provider.of<LocalizationProvider>(context);
     final notifications = [
       {
-        'title': 'System Update',
-        'subtitle': 'VietSpots 2.0 is now available with new AI features!',
-        'time': '2 hours ago',
+        'title': loc.translate('notif_system_update_title'),
+        'subtitle': loc.translate('notif_system_update_subtitle'),
+        'time': loc.translate('notif_system_update_time'),
         'isUnread': true,
       },
       {
-        'title': 'New Suggestion',
-        'subtitle': 'Based on your recent trip to Da Lat, you might like...',
-        'time': '1 day ago',
+        'title': loc.translate('notif_new_suggestion_title'),
+        'subtitle': loc.translate('notif_new_suggestion_subtitle'),
+        'time': loc.translate('notif_new_suggestion_time'),
         'isUnread': false,
       },
       {
-        'title': 'Welcome to VietSpots',
-        'subtitle': 'Thanks for joining our community of travelers.',
-        'time': '3 days ago',
+        'title': loc.translate('notif_welcome_title'),
+        'subtitle': loc.translate('notif_welcome_subtitle'),
+        'time': loc.translate('notif_welcome_time'),
         'isUnread': false,
       },
     ];
@@ -35,7 +38,7 @@ class NotificationScreen extends StatelessWidget {
             : Colors.redAccent,
         elevation: Theme.of(context).brightness == Brightness.dark ? 0 : 0,
         title: Text(
-          'Notifications',
+          loc.translate('notifications'),
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
       ),

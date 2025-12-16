@@ -135,8 +135,9 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          SafeArea(
+            top: false,
+            minimum: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

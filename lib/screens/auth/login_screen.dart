@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Center(
                     child: Image.asset(
-                      'assets/icons/VietSpots_app_icon.png',
+                      'assets/icons/vietspots_full_icon.png',
                       width: 88,
                       height: 88,
                       fit: BoxFit.contain,

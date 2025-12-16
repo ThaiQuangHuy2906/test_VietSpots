@@ -69,8 +69,13 @@ class LocalizationProvider with ChangeNotifier {
       'save_changes': 'Save Changes',
       'general_information': 'General Information',
       'private_information': 'Private Information',
+      'settings_section_personal_information': 'Personal Information',
+      'settings_section_security_permissions': 'Security & Permissions',
+      'settings_section_general': 'General',
+      'settings_section_about': 'About',
       'preferences': 'Preferences',
       'preferences_subtitle': 'Adventure, relaxing, ...',
+      'culture': 'Culture',
       'culture_subtitle': 'Select your culture',
       'religion_subtitle': 'Select your religion',
       'companion_preference': 'Companion Preference',
@@ -91,7 +96,9 @@ class LocalizationProvider with ChangeNotifier {
       'photo_permission_denied': 'Photo permission denied.',
 
       'help_center': 'Help Center',
+      'help_center_body': 'Content is being updated.',
       'legal_policy': 'Legal Policy',
+      'legal_policy_body': 'Content is being updated.',
 
       'pref_adventure': 'Adventure',
       'pref_less_travelling': 'Less travelling',
@@ -156,11 +163,29 @@ class LocalizationProvider with ChangeNotifier {
 
       'favorites_title': 'Favorites',
       'no_favorites_yet': 'No favorites yet',
+      'favorites_empty_hint':
+          'Start exploring and save your\nfavorite places here',
       'explore_places': 'Explore Places',
+      'notif_system_update_title': 'System Update',
+      'notif_system_update_subtitle':
+          'VietSpots 2.0 is now available with new AI features!',
+      'notif_system_update_time': '2 hours ago',
+      'notif_new_suggestion_title': 'New Suggestion',
+      'notif_new_suggestion_subtitle':
+          'Based on your recent trip to Da Lat, you might like...',
+      'notif_new_suggestion_time': '1 day ago',
+      'notif_welcome_title': 'Welcome to VietSpots',
+      'notif_welcome_subtitle':
+          'Thanks for joining our community of travelers.',
+      'notif_welcome_time': '3 days ago',
 
       'remove_favorite_title': 'Remove from favorites?',
       'remove_favorite_body':
           'Are you sure you want to remove this place from favorites?',
+
+      'added_to_favorites': 'Added to Favorites',
+      'removed_from_favorites': 'Removed from Favorites',
+      'highlights': 'Highlights',
 
       'add_comment': 'Add Comment',
       'get_directions': 'Get Directions',
@@ -195,8 +220,15 @@ class LocalizationProvider with ChangeNotifier {
       'share_not_implemented': 'Share not implemented',
       'conversation_deleted': 'Conversation deleted',
 
+      'done': 'Done',
+      'could_not_crop_image': 'Could not crop image',
+
       'dark_mode': 'Dark Mode',
       'language': 'Language',
+      'language_english': 'English',
+      'language_vietnamese': 'Tiếng Việt',
+      'language_russian': 'Русский',
+      'language_chinese': '中文',
       'logout': 'Log Out',
       'logout_confirm': 'Are you sure you want to log out?',
       'cancel': 'Cancel',
@@ -261,8 +293,13 @@ class LocalizationProvider with ChangeNotifier {
       'save_changes': 'Lưu thay đổi',
       'general_information': 'Thông tin chung',
       'private_information': 'Thông tin riêng tư',
+      'settings_section_personal_information': 'Thông tin cá nhân',
+      'settings_section_security_permissions': 'Bảo mật & quyền truy cập',
+      'settings_section_general': 'Chung',
+      'settings_section_about': 'Giới thiệu',
       'preferences': 'Sở thích',
       'preferences_subtitle': 'Phiêu lưu, thư giãn, ...',
+      'culture': 'Văn hóa',
       'culture_subtitle': 'Chọn văn hóa của bạn',
       'religion_subtitle': 'Chọn tôn giáo của bạn',
       'companion_preference': 'Bạn đồng hành',
@@ -283,7 +320,9 @@ class LocalizationProvider with ChangeNotifier {
       'photo_permission_denied': 'Từ chối quyền ảnh.',
 
       'help_center': 'Trung tâm trợ giúp',
+      'help_center_body': 'Nội dung đang được cập nhật.',
       'legal_policy': 'Chính sách pháp lý',
+      'legal_policy_body': 'Nội dung đang được cập nhật.',
 
       'pref_adventure': 'Phiêu lưu',
       'pref_less_travelling': 'Ít di chuyển',
@@ -348,11 +387,29 @@ class LocalizationProvider with ChangeNotifier {
 
       'favorites_title': 'Yêu thích',
       'no_favorites_yet': 'Chưa có mục yêu thích',
+      'favorites_empty_hint':
+          'Bắt đầu khám phá và lưu\nnhững địa điểm yêu thích tại đây',
       'explore_places': 'Khám phá địa điểm',
+      'notif_system_update_title': 'Cập nhật hệ thống',
+      'notif_system_update_subtitle':
+          'VietSpots 2.0 hiện đã có với các tính năng AI mới!',
+      'notif_system_update_time': '2 giờ trước',
+      'notif_new_suggestion_title': 'Gợi ý mới',
+      'notif_new_suggestion_subtitle':
+          'Dựa trên chuyến đi gần đây của bạn đến Đà Lạt, bạn có thể thích...',
+      'notif_new_suggestion_time': '1 ngày trước',
+      'notif_welcome_title': 'Chào mừng đến với VietSpots',
+      'notif_welcome_subtitle':
+          'Cảm ơn bạn đã tham gia cộng đồng du lịch của chúng tôi.',
+      'notif_welcome_time': '3 ngày trước',
 
       'remove_favorite_title': 'Xóa khỏi yêu thích?',
       'remove_favorite_body':
           'Bạn có chắc muốn xóa địa điểm này khỏi danh sách yêu thích không?',
+
+      'added_to_favorites': 'Đã thêm vào yêu thích',
+      'removed_from_favorites': 'Đã xóa khỏi yêu thích',
+      'highlights': 'Điểm nổi bật',
 
       'add_comment': 'Thêm đánh giá',
       'get_directions': 'Chỉ đường',
@@ -386,8 +443,15 @@ class LocalizationProvider with ChangeNotifier {
       'share_not_implemented': 'Chưa hỗ trợ chia sẻ',
       'conversation_deleted': 'Đã xóa cuộc trò chuyện',
 
+      'done': 'Xong',
+      'could_not_crop_image': 'Không thể cắt ảnh',
+
       'dark_mode': 'Chế độ tối',
       'language': 'Ngôn ngữ',
+      'language_english': 'English',
+      'language_vietnamese': 'Tiếng Việt',
+      'language_russian': 'Русский',
+      'language_chinese': '中文',
       'logout': 'Đăng xuất',
       'logout_confirm': 'Bạn có chắc chắn muốn đăng xuất?',
       'cancel': 'Hủy',
@@ -454,8 +518,13 @@ class LocalizationProvider with ChangeNotifier {
       'save_changes': 'Сохранить изменения',
       'general_information': 'Общая информация',
       'private_information': 'Личная информация',
+      'settings_section_personal_information': 'Личная информация',
+      'settings_section_security_permissions': 'Безопасность и разрешения',
+      'settings_section_general': 'Общие',
+      'settings_section_about': 'О приложении',
       'preferences': 'Предпочтения',
       'preferences_subtitle': 'Приключения, отдых, ...',
+      'culture': 'Культура',
       'culture_subtitle': 'Выберите вашу культуру',
       'religion_subtitle': 'Выберите вашу религию',
       'companion_preference': 'Спутник',
@@ -476,7 +545,9 @@ class LocalizationProvider with ChangeNotifier {
       'photo_permission_denied': 'Доступ к фото отклонён.',
 
       'help_center': 'Центр помощи',
+      'help_center_body': 'Содержимое обновляется.',
       'legal_policy': 'Правовая политика',
+      'legal_policy_body': 'Содержимое обновляется.',
 
       'pref_adventure': 'Приключения',
       'pref_less_travelling': 'Меньше поездок',
@@ -541,11 +612,29 @@ class LocalizationProvider with ChangeNotifier {
 
       'favorites_title': 'Избранное',
       'no_favorites_yet': 'Пока нет избранного',
+      'favorites_empty_hint':
+          'Начните исследовать и сохранять ваши\nлюбимые места здесь',
       'explore_places': 'Исследовать места',
+      'notif_system_update_title': 'Системное обновление',
+      'notif_system_update_subtitle':
+          'VietSpots 2.0 теперь доступен с новыми AI функциями!',
+      'notif_system_update_time': '2 часа назад',
+      'notif_new_suggestion_title': 'Новое предложение',
+      'notif_new_suggestion_subtitle':
+          'На основе вашей недавней поездки в Да Лат, вам может понравиться...',
+      'notif_new_suggestion_time': '1 день назад',
+      'notif_welcome_title': 'Добро пожаловать в VietSpots',
+      'notif_welcome_subtitle':
+          'Спасибо, что присоединились к нашему сообществу путешественников.',
+      'notif_welcome_time': '3 дня назад',
 
       'remove_favorite_title': 'Удалить из избранного?',
       'remove_favorite_body':
           'Вы уверены, что хотите удалить это место из избранного?',
+
+      'added_to_favorites': 'Добавлено в избранное',
+      'removed_from_favorites': 'Удалено из избранного',
+      'highlights': 'Особенности',
 
       'add_comment': 'Добавить отзыв',
       'get_directions': 'Маршрут',
@@ -579,8 +668,15 @@ class LocalizationProvider with ChangeNotifier {
       'share_not_implemented': 'Поделиться не реализовано',
       'conversation_deleted': 'Диалог удален',
 
+      'done': 'Готово',
+      'could_not_crop_image': 'Не удалось обрезать изображение',
+
       'dark_mode': 'Темный режим',
       'language': 'Язык',
+      'language_english': 'English',
+      'language_vietnamese': 'Tiếng Việt',
+      'language_russian': 'Русский',
+      'language_chinese': '中文',
       'logout': 'Выйти',
       'logout_confirm': 'Вы уверены, что хотите выйти?',
       'cancel': 'Отмена',
@@ -644,8 +740,13 @@ class LocalizationProvider with ChangeNotifier {
       'save_changes': '保存更改',
       'general_information': '基本信息',
       'private_information': '隐私信息',
+      'settings_section_personal_information': '个人信息',
+      'settings_section_security_permissions': '安全与权限',
+      'settings_section_general': '通用',
+      'settings_section_about': '关于',
       'preferences': '偏好',
       'preferences_subtitle': '冒险、放松、...',
+      'culture': '文化',
       'culture_subtitle': '选择你的文化',
       'religion_subtitle': '选择你的宗教',
       'companion_preference': '同行偏好',
@@ -666,7 +767,9 @@ class LocalizationProvider with ChangeNotifier {
       'photo_permission_denied': '相册权限被拒绝。',
 
       'help_center': '帮助中心',
+      'help_center_body': '内容正在更新。',
       'legal_policy': '法律政策',
+      'legal_policy_body': '内容正在更新。',
 
       'pref_adventure': '冒险',
       'pref_less_travelling': '少出行',
@@ -731,10 +834,24 @@ class LocalizationProvider with ChangeNotifier {
 
       'favorites_title': '收藏',
       'no_favorites_yet': '暂无收藏',
+      'favorites_empty_hint': '开始探索并保存您最喜欢的地方',
       'explore_places': '探索地点',
+      'notif_system_update_title': '系统更新',
+      'notif_system_update_subtitle': 'VietSpots 2.0 现已推出新 AI 功能！',
+      'notif_system_update_time': '2小时前',
+      'notif_new_suggestion_title': '新建议',
+      'notif_new_suggestion_subtitle': '根据您最近的达拉特之行，您可能会喜欢...',
+      'notif_new_suggestion_time': '1天前',
+      'notif_welcome_title': '欢迎来到 VietSpots',
+      'notif_welcome_subtitle': '感谢您加入我们的旅行者社区。',
+      'notif_welcome_time': '3天前',
 
       'remove_favorite_title': '从收藏移除？',
       'remove_favorite_body': '确定要从收藏中移除这个地点吗？',
+
+      'added_to_favorites': '已添加到收藏',
+      'removed_from_favorites': '已从收藏中移除',
+      'highlights': '亮点',
 
       'add_comment': '添加评价',
       'get_directions': '路线',
@@ -768,8 +885,15 @@ class LocalizationProvider with ChangeNotifier {
       'share_not_implemented': '分享未实现',
       'conversation_deleted': '对话已删除',
 
+      'done': '完成',
+      'could_not_crop_image': '无法裁剪图片',
+
       'dark_mode': '深色模式',
       'language': '语言',
+      'language_english': 'English',
+      'language_vietnamese': 'Tiếng Việt',
+      'language_russian': 'Русский',
+      'language_chinese': '中文',
       'logout': '登出',
       'logout_confirm': '您确定要登出吗？',
       'cancel': '取消',

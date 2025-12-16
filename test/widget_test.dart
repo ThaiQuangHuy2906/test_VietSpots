@@ -10,13 +10,27 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vietspots/main.dart';
 import 'package:vietspots/screens/main/main_screen.dart';
+import 'package:vietspots/services/api_service.dart';
+import 'package:vietspots/services/place_service.dart';
+import 'package:vietspots/services/chat_service.dart';
 
 import 'test_app.dart';
 
 void main() {
   testWidgets('App launches without crashing', (WidgetTester tester) async {
+    // Create test services
+    final apiService = ApiService();
+    final placeService = PlaceService(apiService);
+    final chatService = ChatService(apiService);
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const VietSpotsApp());
+    await tester.pumpWidget(
+      VietSpotsApp(
+        apiService: apiService,
+        placeService: placeService,
+        chatService: chatService,
+      ),
+    );
 
     // Wait for app to settle
     await tester.pumpAndSettle();

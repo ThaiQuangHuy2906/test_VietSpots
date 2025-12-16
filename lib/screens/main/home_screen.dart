@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:vietspots/providers/auth_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
+import 'package:vietspots/providers/place_provider.dart';
 import 'package:vietspots/screens/main/search_screen.dart';
 import 'package:vietspots/screens/settings/settings_tree.dart';
-import 'package:vietspots/utils/mock_data.dart';
 import 'package:vietspots/utils/avatar_image_provider.dart';
 import 'package:vietspots/utils/typography.dart';
 import 'package:vietspots/widgets/place_card.dart';
@@ -101,43 +102,105 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          // Simulate refresh delay
-          await Future.delayed(const Duration(seconds: 1));
-          // In real app, reload data from provider/API
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionHeader(
-                  context,
-                  locProvider.translate('recommended_for_you'),
+      body: Consumer<PlaceProvider>(
+        builder: (context, placeProvider, child) {
+          if (placeProvider.isLoading && placeProvider.places.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (placeProvider.error != null && placeProvider.places.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Không thể tải dữ liệu',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => placeProvider.refresh(),
+                    child: const Text('Thử lại'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => placeProvider.refresh(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(
+                      context,
+                      locProvider.translate('recommended_for_you'),
+                    ),
+                    placeProvider.recommendedPlaces.isNotEmpty
+                        ? _buildHorizontalList(
+                            context,
+                            placeProvider.recommendedPlaces,
+                          )
+                        : _buildEmptyState(context, '🔍 Đang tải địa điểm...'),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      context,
+                      locProvider.translate('nearby_places'),
+                    ),
+                    placeProvider.nearbyPlaces.isNotEmpty
+                        ? _buildHorizontalList(
+                            context,
+                            placeProvider.nearbyPlaces,
+                          )
+                        : _buildEmptyState(
+                            context,
+                            '📍 Bật vị trí để xem địa điểm gần bạn',
+                            onTap: () async {
+                              // Try to request permission or open settings
+                              final permission =
+                                  await Geolocator.checkPermission();
+                              if (permission ==
+                                  LocationPermission.deniedForever) {
+                                await Geolocator.openAppSettings();
+                              } else if (permission ==
+                                  LocationPermission.denied) {
+                                await Geolocator.requestPermission();
+                                // Refresh after granting permission
+                                if (context.mounted) {
+                                  await placeProvider.refresh();
+                                }
+                              } else {
+                                // Permission granted but no location yet
+                                await Geolocator.openLocationSettings();
+                              }
+                            },
+                          ),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      context,
+                      locProvider.translate('places_you_visited'),
+                    ),
+                    placeProvider.visitedPlaces.isNotEmpty
+                        ? _buildHorizontalList(
+                            context,
+                            placeProvider.visitedPlaces,
+                          )
+                        : _buildEmptyState(
+                            context,
+                            '🗺️ Bạn chưa đến địa điểm nào',
+                          ),
+                  ],
                 ),
-                _buildHorizontalList(context, MockDataService.places),
-                const SizedBox(height: 24),
-                _buildSectionHeader(
-                  context,
-                  locProvider.translate('nearby_places'),
-                ),
-                _buildHorizontalList(context, MockDataService.district12Places),
-                const SizedBox(height: 24),
-                _buildSectionHeader(
-                  context,
-                  locProvider.translate('places_you_visited'),
-                ),
-                _buildHorizontalList(
-                  context,
-                  MockDataService.places.reversed.toList(),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -154,6 +217,52 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptyState(
+    BuildContext context,
+    String message, {
+    VoidCallback? onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Nhấn để cấp quyền',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHorizontalList(BuildContext context, List places) {
     // Light background container to make content feel slightly raised.
     return Padding(
@@ -161,7 +270,7 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(230 / 255),
+          color: Theme.of(context).cardColor.withValues(alpha: 230 / 255),
           borderRadius: BorderRadius.circular(16),
         ),
         child: SizedBox(

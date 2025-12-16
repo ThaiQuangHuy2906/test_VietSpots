@@ -39,14 +39,22 @@ class SettingsScreen extends StatelessWidget {
             Center(
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: avatarImageProvider(user.avatarUrl),
-                    onBackgroundImageError: (_, _) {},
-                    child: user.avatarUrl == null
-                        ? const Icon(Icons.person, size: 50)
-                        : null,
-                  ),
+                  // Avoid assertion: only set onBackgroundImageError when backgroundImage is provided
+                  () {
+                    final img = avatarImageProvider(user.avatarUrl);
+                    if (img != null) {
+                      return CircleAvatar(
+                        radius: 50,
+                        backgroundImage: img,
+                        onBackgroundImageError:
+                            (Object error, StackTrace? st) {},
+                      );
+                    }
+                    return const CircleAvatar(
+                      radius: 50,
+                      child: Icon(Icons.person, size: 50),
+                    );
+                  }(),
                   const SizedBox(height: 16),
                   Text(
                     user.name,

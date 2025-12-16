@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vietspots/providers/auth_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
-import 'package:vietspots/screens/auth/edit_profile_screen.dart';
+// Removed: edit_profile_screen import (not used in new flow)
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -17,18 +17,44 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
+  bool _isLoading = false;
 
-  void _onRegister() {
+  Future<void> _onRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isLoading = true);
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    auth.register(_emailController.text.trim(), _passwordController.text);
-    auth.updateProfile(phone: _phoneController.text.trim());
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+    final success = await auth.register(
+      _emailController.text.trim(),
+      _passwordController.text,
     );
+
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+
+    if (success) {
+      // If email confirmation is enabled in Supabase, inform user
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận, sau đó đăng nhập.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navigate to Login screen for user to sign in
+      Navigator.pop(context); // pop Registration
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'Đăng ký thất bại'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -60,6 +86,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   const SizedBox(height: 40),
                   TextFormField(
                     controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: loc.translate('email'),
                       border: const OutlineInputBorder(),
@@ -69,12 +97,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       if (value == null || value.trim().isEmpty) {
                         return loc.translate('email_required');
                       }
+                      final emailRegex = RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      );
+                      if (!emailRegex.hasMatch(value.trim())) {
+                        return 'Email không hợp lệ';
+                      }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _phoneController,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: loc.translate('phone_number'),
                       border: const OutlineInputBorder(),
@@ -91,6 +126,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: loc.translate('password'),
                       border: const OutlineInputBorder(),
@@ -100,6 +136,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       if (value == null || value.isEmpty) {
                         return loc.translate('password_required');
                       }
+                      if (value.length < 6) {
+                        return 'Mật khẩu phải có ít nhất 6 ký tự';
+                      }
                       return null;
                     },
                   ),
@@ -107,6 +146,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: true,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: loc.translate('confirm_password'),
                       border: const OutlineInputBorder(),
@@ -127,8 +167,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _onRegister,
-                      child: Text(loc.translate('register')),
+                      onPressed: _isLoading ? null : _onRegister,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Text(loc.translate('register')),
                     ),
                   ),
                 ],

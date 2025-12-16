@@ -1,36 +1,83 @@
 # VietSpots
 
-A modern, professionally-designed Flutter application for discovering and exploring tourist spots in Vietnam, powered by AI chat assistance. Built with Material Design 3 principles and a comprehensive design system achieving 10/10 UI/UX standards.
+A modern Flutter application for discovering and exploring tourist spots in Vietnam, powered by AI chat assistance and real-time backend integration. Built with Material Design 3 principles and a comprehensive design system.
 
 ## ✨ Features
 
 ### 🤖 AI-Powered Experience
-- **Intelligent Travel Assistant**: Chat with VietSpots AI for personalized travel recommendations
-- **Chat History (In-session)**: Open previous conversations from the History drawer
-- **Real-time Responses**: Smooth chat interface with typing indicators and timestamps
+- **Intelligent Travel Assistant**: Chat with Gemini AI for personalized travel recommendations
+- **Markdown Formatting**: Beautiful formatted responses with headers, lists, and bold text
+- **Context-Aware Responses**: AI understands your location, preferences, and travel history
+- **Weather Integration**: Real-time weather data for better trip planning
+- **Semantic Search**: Find places using natural language queries
+- **Extended Timeout**: 90-second timeout for AI processing to handle complex queries
 
 ### 🎨 Professional UI/UX Design
-- **Design System**: Comprehensive typography tokens, 8px spacing grid, and color system
+- **Modern Design System**: Comprehensive typography tokens, 8px spacing grid, and color system
 - **WCAG AA Compliant**: Accessible contrast ratios for dark and light modes
 - **Visual Hierarchy**: Clear section headers, improved readability, consistent styling
-- **Micro-interactions**: Pull-to-refresh, smooth transitions, visual feedback
+- **Smooth Animations**: Pull-to-refresh, transitions, and micro-interactions
 - **Enhanced Empty States**: Helpful illustrations and actionable CTAs
 
 ### 🌟 Core Features
-- **Place Discovery**: Browse curated tourist destinations across Vietnam
-- **Smart Search**: Real-time search with clear button and filters
-- **Favorites Management**: Save and organize your favorite places
-- **User Authentication**: Secure login and registration system
-- **Notifications**: Visual states for read/unread with red dot indicators
-- **Notification Details**: Tap a notification to see the full content
+- **Place Discovery**: Browse real tourist destinations from Supabase database
+- **Smart Search & Filters**: Find places by name, category, location, and more
+- **Reviews & Ratings**: Read and write authentic reviews for visited places
+- **Image Gallery**: View and upload photos for places and reviews
+- **Favorites Management**: Save and sync your favorite places across devices
+- **User Authentication**: Secure Supabase authentication with JWT tokens
+- **Real-time Notifications**: Stay updated with place recommendations and activity
 - **Dark/Light Theme**: Seamless theme switching with proper contrast
-- **Multi-language Support**: English/Vietnamese/Russian/Chinese via `LocalizationProvider`
-- **Profile & Settings**:
-   - Change avatar from the device gallery (with runtime permission)
-   - General Information: Full name, email, phone (validated)
-   - Private Information: Preferences, Culture, Religion, Companion preference
-   - Change Password: validates current password (demo/in-memory)
-- **Offline Support**: Mock data for demonstration purposes
+- **Multi-language Support**: English/Vietnamese/Russian/Chinese
+- **User Profile & Settings**:
+   - Upload avatar images to cloud storage
+   - Manage profile information and preferences
+   - Secure password management
+
+## 🔧 Backend Integration
+
+VietSpots connects to a FastAPI backend (see `VietSpot_backend` folder) that provides:
+
+- **Supabase Database**: PostgreSQL with real-time capabilities
+- **Authentication**: JWT-based user authentication
+- **Place Management**: CRUD operations for places, reviews, and images
+- **AI Services**:
+  - Gemini AI for conversational travel assistance
+  - Semantic search using embeddings
+  - Intelligent scoring and recommendations
+  - Weather API integration
+- **Cloud Storage**: Image uploads to Supabase Storage
+
+### Backend Setup
+
+1. Navigate to backend folder:
+   ```bash
+   cd VietSpot_backend
+   ```
+
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Configure environment variables in `.env`:
+   ```env
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_supabase_key
+   GEMINI_API_KEY=your_gemini_key
+   WEATHER_API_KEY=your_weather_key
+   ```
+
+4. Run the backend:
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+### API Configuration
+
+Update the API base URL in Flutter app:
+- Development: `http://localhost:8000/api`
+- Production: Your deployed backend URL
 
 ## Screenshots
 
@@ -40,6 +87,7 @@ A modern, professionally-designed Flutter application for discovering and explor
 
 - **Flutter**: 3.38.5 or higher
 - **Dart**: 3.10.4 or higher
+- **Python**: 3.9+ (for backend)
 - **Android Studio** or **Visual Studio Code** with Flutter extension
 - **Android SDK** (for Android development)
 - **Xcode** (for iOS development on macOS)
@@ -120,34 +168,37 @@ A modern, professionally-designed Flutter application for discovering and explor
 lib/
 ├── main.dart                 # Application entry point
 ├── models/                   # Data models
-│   ├── chat_model.dart       # Chat message model with timestamps
-│   ├── place_model.dart      # Place/location data model
-│   └── user_model.dart       # User authentication model
+│   ├── chat_model.dart       # Chat message and history
+│   ├── place_model.dart      # Place/location with reviews
+│   └── user_model.dart       # User profile and auth
 ├── providers/                # State management (Provider pattern)
-│   ├── auth_provider.dart    # Authentication state
-│   ├── chat_provider.dart    # Chat history management
-│   ├── localization_provider.dart  # Language switching
-│   ├── place_provider.dart   # Places and favorites state
-│   └── theme_provider.dart   # Dark/Light theme state
+│   ├── auth_provider.dart    # Authentication state with backend
+│   ├── chat_provider.dart    # Chat with Gemini AI
+│   ├── localization_provider.dart  # Multi-language support
+│   ├── place_provider.dart   # Places, favorites, reviews
+│   └── theme_provider.dart   # Theme switching
 ├── screens/                  # UI screens
 │   ├── auth/                 # Login and registration
-│   ├── detail/               # Place detail screen
+│   ├── detail/               # Place detail with reviews
 │   ├── main/                 # Main app screens
-│   │   ├── home_screen.dart  # Home with place discovery
+│   │   ├── home_screen.dart  # Discover places
 │   │   ├── search_screen.dart # Search with filters
-│   │   ├── chat_screen.dart  # AI chat assistant
-│   │   ├── notification_screen.dart # Notifications with visual states
-│   │   ├── notification_detail_screen.dart # Full notification view
+│   │   ├── chat_screen.dart  # AI travel assistant
+│   │   ├── notification_screen.dart # Notifications
 │   │   ├── favorites_screen.dart # Saved places
-│   │   ├── settings_screen.dart # User settings
-│   │   └── main_screen.dart  # Bottom navigation wrapper
-│   ├── settings/             # Settings sub-screens
+│   │   └── settings_screen.dart # User settings
 │   └── splash_screen.dart    # App launch screen
+├── services/                 # Backend integration
+│   ├── api_client.dart       # HTTP client wrapper
+│   ├── auth_service.dart     # Authentication API
+│   ├── place_service.dart    # Places API
+│   ├── comment_service.dart  # Reviews API
+│   ├── user_service.dart     # User profile API
+│   ├── image_service.dart    # Image upload API
+│   └── chat_service.dart     # AI chat API
 ├── utils/                    # Utilities and design system
-│   ├── mock_data.dart        # Sample data for demo
-│   ├── avatar_image_provider.dart # Avatar: network vs local file
-│   ├── theme.dart            # Theme configuration (colors, card styles)
-│   └── typography.dart       # Design tokens (fonts, spacing, colors)
+│   ├── theme.dart            # Theme configuration
+│   └── typography.dart       # Design tokens
 └── widgets/                  # Reusable widgets
     └── place_card.dart       # Place card component
 ```
@@ -218,15 +269,34 @@ xxl: 48px // Extra large
 
 Key packages used in this project:
 
-- **provider** (^6.1.2): State management
-- **cached_network_image** (^3.4.1): Optimized image loading and caching
-- **permission_handler** (^11.4.0): Runtime permission management
-- **image_picker** (^1.1.2): Pick avatar image from device gallery
-- **url_launcher** (^6.3.1): Open URLs and external apps
-- **intl** (^0.19.0): Internationalization and date formatting
-- **google_fonts** (^6.2.1): Noto Sans for better multi-language glyph coverage
+**State Management & Navigation:**
+- **provider** (^6.1.2): State management pattern
 
-See `pubspec.yaml` for complete list of dependencies.
+**Backend Integration:**
+- **http** (^0.13.6): API requests to FastAPI backend
+- **shared_preferences** (^2.3.2): Local data persistence
+
+**UI & Media:**
+- **flutter_markdown** (^0.7.4+1): Render markdown in chat responses
+- **cached_network_image** (^3.3.1): Image loading with caching (mobile)
+- **google_fonts** (^4.0.4): Typography (Noto Sans)
+- **flutter_svg** (^1.1.6): SVG icon support
+- **image_picker** (^1.1.2): Camera and gallery access
+- **permission_handler** (^11.3.0): Runtime permissions
+- **url_launcher** (^6.2.5): External URLs and maps
+
+**Mapping & Location:**
+- **flutter_map** (^4.0.0): Interactive maps
+- **latlong2** (^0.8.1): Lat/long calculations
+- **geolocator** (^9.0.2): Location services
+
+**Utilities:**
+- **intl** (^0.19.0): Internationalization and formatting
+- **uuid** (^4.4.2): Unique ID generation
+- **path_provider** (^2.1.5): File system paths
+- **crop_your_image** (^2.0.0): Image cropping
+
+See `pubspec.yaml` for the complete dependency list.
 
 ## Configuration
 
@@ -245,29 +315,56 @@ See `pubspec.yaml` for complete list of dependencies.
 2. **iOS**: Add to `ios/Runner/Info.plist`:
    ```xml
    <key>NSLocationWhenInUseUsageDescription</key>
-   <string>This app needs location access for travel recommendations</string>
+   <string>We need your location for personalized travel recommendations</string>
+   <key>NSPhotoLibraryUsageDescription</key>
+   <string>We need access to your photos to upload images</string>
+   <key>NSCameraUsageDescription</key>
+   <string>We need camera access to take photos</string>
    ```
 
-### API Keys
+### Backend URL Configuration
 
-*(Add instructions for any required API keys)*
+Update the API base URL in `lib/services/api_client.dart`:
+```dart
+static const String baseUrl = 'http://localhost:8000/api'; // Development
+// static const String baseUrl = 'https://your-backend.com/api'; // Production
+```
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the backend folder:
+
+```env
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+
+# AI Services
+GEMINI_API_KEY=your-gemini-api-key
+
+# Weather
+WEATHER_API_KEY=your-openweather-api-key
+```
 
 ## 🏗️ Architecture & Best Practices
 
 ### State Management
-- **Provider Pattern**: Separation of business logic from UI
+- **Provider Pattern**: Clean separation of business logic from UI
+- **Service Layer**: Backend API integration with proper error handling
 - **Consumer Widgets**: Efficient rebuilds for specific state changes
-- **ChangeNotifier**: Reactive state updates
+- **ChangeNotifier**: Reactive state updates across the app
 
-### Notes / Limitations (Current)
-- Chat history and user profile are stored **in memory** (demo mode). There is no persistence layer in this project.
-- Password validation in "Change Password" is also **in-memory demo logic** (no backend).
+### Backend Architecture
+- **FastAPI**: High-performance Python backend
+- **Supabase**: PostgreSQL database with Row Level Security
+- **Microservices**: Modular services for places, auth, AI, storage
+- **REST API**: Well-documented endpoints with proper status codes
 
 ### Code Quality
 - **Type Safety**: Strict null safety enabled
 - **Linting**: Flutter recommended lints
-- **Formatting**: Consistent code formatting with `dart format`
-- **No Deprecation**: All deprecated APIs replaced (e.g., `withOpacity` → `withValues`)
+- **Error Handling**: Comprehensive try-catch with user-friendly messages
+- **API Clients**: Reusable service classes for backend communication
 
 ### Accessibility
 - **WCAG AA Compliance**: All text meets 4.5:1 contrast ratio
@@ -275,15 +372,24 @@ See `pubspec.yaml` for complete list of dependencies.
 - **Screen Reader Support**: Semantic labels for assistive technologies
 
 ### Performance
-- **Lazy Loading**: ListView.builder for efficient list rendering
-- **Image Caching**: CachedNetworkImage for optimized loading
+- **Lazy Loading**: ListView.builder for efficient rendering
+- **Image Caching**: CachedNetworkImage reduces network calls
+- **Pagination**: Load places and reviews in chunks
+- **Debouncing**: Smart search with input debouncing
 - **Build Optimization**: Const constructors where possible
 
 ### UI/UX Patterns
 - **Pull-to-Refresh**: RefreshIndicator on all list screens
-- **Loading States**: Skeleton screens and progress indicators
-- **Error Handling**: User-friendly error messages with retry actions
-- **Empty States**: Helpful illustrations with clear CTAs
+- **Loading States**: Shimmer effects and progress indicators
+- **Error Handling**: Retry actions with clear error messages
+- **Empty States**: Helpful illustrations with actionable CTAs
+- **Optimistic Updates**: Instant UI feedback for better UX
+
+### Web Compatibility
+- **Image Loading**: Platform-specific handling (Image.network for web, CachedNetworkImage for mobile)
+- **CORS Handling**: Graceful fallback for Google Photos URLs that fail CORS on web
+- **Responsive Design**: Adaptive layouts for different screen sizes
+- **Hot Reload**: Full support for Flutter hot reload during development
 
 ## 🤝 Contributing
 
@@ -303,21 +409,50 @@ See `pubspec.yaml` for complete list of dependencies.
    flutter pub get
    ```
 
-2. **Permission issues**:
-   - Ensure location permissions are granted
-   - Check app permissions in device settings
+2. **Backend connection failed**:
+   - Ensure backend is running on `http://localhost:8000`
+   - Check API base URL in `api_client.dart`
+   - Verify `.env` file has correct credentials
 
-3. **Build failures**:
+3. **Permission issues**:
+   - Grant location and storage permissions in device settings
+   - For iOS, check Info.plist has required keys
+
+4. **Build failures**:
    ```bash
    flutter clean
    flutter pub get
    flutter run
    ```
 
+5. **Image upload not working**:
+   - Verify Supabase Storage bucket is public
+   - Check image picker permissions
+   - Ensure backend storage service is configured
+
+6. **Images not loading on web**:
+   - Google Photos URLs may be blocked by CORS policy
+   - App shows placeholder icons when images fail to load
+   - Solution: Backend should save images to Supabase Storage
+
+7. **Chat timeout errors**:
+   - Chat API now has 90-second timeout (increased from 30s)
+   - Backend needs time for Gemini AI + semantic search
+   - If still timing out, check backend performance
+
+### Recent Fixes
+
+- ✅ **Fixed review count bug**: Cards now always show total review count instead of loaded page size
+- ✅ **Fixed chat timeout**: Increased timeout from 30s to 90s for AI processing
+- ✅ **Added markdown rendering**: Chat responses now beautifully formatted with headers, lists, bold text
+- ✅ **Fixed web image loading**: Platform-specific image handling for better web compatibility
+- ✅ **Improved error messages**: Better debugging with timeout-specific error messages
+
 ### Getting Help
 
 - [Flutter Documentation](https://docs.flutter.dev/)
-- [Flutter Community](https://flutter.dev/community)
+- [Supabase Documentation](https://supabase.com/docs)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/flutter)
 
 ## License
@@ -327,5 +462,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Flutter team for the amazing framework
+- Supabase for backend infrastructure
+- Google Gemini AI for intelligent assistance
 - Open source community for the packages used
 - Vietnamese tourism industry for inspiration
+
+---
+
+**Note**: This app connects to a real backend. Ensure the backend server is running and properly configured before using the app.

@@ -11,24 +11,63 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:vietspots/providers/localization_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vietspots/services/comment_service.dart';
+import 'package:vietspots/services/api_service.dart';
 
-class PlaceDetailScreen extends StatelessWidget {
+class PlaceDetailScreen extends StatefulWidget {
   final Place place;
 
   const PlaceDetailScreen({super.key, required this.place});
+
+  @override
+  State<PlaceDetailScreen> createState() => _PlaceDetailScreenState();
+}
+
+class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadComments();
+  }
+
+  String _timeAgo(DateTime dateTime) {
+    final diff = DateTime.now().difference(dateTime);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  Future<void> _loadComments() async {
+    try {
+      final api = Provider.of<ApiService>(context, listen: false);
+      final service = CommentService(api);
+      final dtos = await service.getPlaceComments(widget.place.id, limit: 20);
+      final comments = dtos.map((d) => d.toPlaceComment()).toList();
+      if (mounted) {
+        Provider.of<PlaceProvider>(
+          context,
+          listen: false,
+        ).setComments(widget.place.id, comments);
+      }
+    } catch (e) {
+      // Silently ignore
+      debugPrint('Failed to load comments: $e');
+    }
+  }
 
   void _openDirections(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DirectionsMapScreen(place: place),
+        builder: (context) => DirectionsMapScreen(place: widget.place),
       ),
     );
   }
 
   Future<void> _openWebsite(BuildContext context) async {
     final loc = Provider.of<LocalizationProvider>(context, listen: false);
-    final url = place.website;
+    final url = widget.place.website;
     if (url == null || url.trim().isEmpty) return;
 
     final uri = Uri.tryParse(url);
@@ -58,7 +97,7 @@ class PlaceDetailScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) =>
-          _AddReviewBottomSheet(placeId: place.id, rootContext: context),
+          _AddReviewBottomSheet(placeId: widget.place.id, rootContext: context),
     );
   }
 
@@ -101,7 +140,7 @@ class PlaceDetailScreen extends StatelessWidget {
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                place.localizedName(locale),
+                widget.place.localizedName(locale),
                 style: const TextStyle(
                   color: Colors.white,
                   shadows: [
@@ -117,7 +156,7 @@ class PlaceDetailScreen extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   CachedNetworkImage(
-                    imageUrl: place.imageUrl,
+                    imageUrl: widget.place.imageUrl,
                     fit: BoxFit.cover,
                     placeholder: (context, url) =>
                         Container(color: Colors.grey[300]),
@@ -129,7 +168,7 @@ class PlaceDetailScreen extends StatelessWidget {
             actions: [
               Consumer<PlaceProvider>(
                 builder: (context, placeProvider, _) {
-                  final isFav = placeProvider.isFavorite(place.id);
+                  final isFav = placeProvider.isFavorite(widget.place.id);
                   return IconButton(
                     icon: Icon(
                       isFav ? Icons.favorite : Icons.favorite_border,
@@ -137,7 +176,7 @@ class PlaceDetailScreen extends StatelessWidget {
                       size: 28,
                     ),
                     onPressed: () {
-                      placeProvider.toggleFavorite(place.id);
+                      placeProvider.toggleFavorite(widget.place.id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -170,7 +209,7 @@ class PlaceDetailScreen extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.1),
+                          color: Colors.amber.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -182,7 +221,7 @@ class PlaceDetailScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              place.rating.toStringAsFixed(1),
+                              widget.place.rating.toStringAsFixed(1),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -195,14 +234,11 @@ class PlaceDetailScreen extends StatelessWidget {
                       Consumer<PlaceProvider>(
                         builder: (context, provider, _) {
                           final p = provider.places.firstWhere(
-                            (e) => e.id == place.id,
-                            orElse: () => place,
+                            (e) => e.id == widget.place.id,
+                            orElse: () => widget.place,
                           );
-                          final reviewCount = p.comments.isNotEmpty
-                              ? p.comments.length
-                              : p.commentCount;
                           return Text(
-                            '($reviewCount ${loc.translate('reviews')})',
+                            '(${p.commentCount} ${loc.translate('reviews')})',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.grey[600]),
                           );
@@ -242,7 +278,7 @@ class PlaceDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    place.localizedDescription(locale),
+                    widget.place.localizedDescription(locale),
                     style: Theme.of(
                       context,
                     ).textTheme.bodyLarge?.copyWith(height: 1.8, fontSize: 15),
@@ -258,27 +294,29 @@ class PlaceDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  if (place.price != null && place.price!.trim().isNotEmpty)
+                  if (widget.place.price != null &&
+                      widget.place.price!.trim().isNotEmpty)
                     Text(
-                      '${loc.translate('price')}: ${place.price}',
+                      '${loc.translate('price')}: ${widget.place.price}',
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                  if (place.openingTime != null &&
-                      place.openingTime!.trim().isNotEmpty)
+                  if (widget.place.openingTime != null &&
+                      widget.place.openingTime!.trim().isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        '${loc.translate('opening_time')}: ${place.openingTime}',
+                        '${loc.translate('opening_time')}: ${widget.place.openingTime}',
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
-                  if (place.website != null && place.website!.trim().isNotEmpty)
+                  if (widget.place.website != null &&
+                      widget.place.website!.trim().isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: InkWell(
                         onTap: () => _openWebsite(context),
                         child: Text(
-                          place.website!,
+                          widget.place.website!,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
                                 decoration: TextDecoration.underline,
@@ -295,7 +333,10 @@ class PlaceDetailScreen extends StatelessWidget {
                       width: double.infinity,
                       child: FlutterMap(
                         options: MapOptions(
-                          center: LatLng(place.latitude, place.longitude),
+                          center: LatLng(
+                            widget.place.latitude,
+                            widget.place.longitude,
+                          ),
                           zoom: 14.0,
                         ),
                         children: [
@@ -306,7 +347,10 @@ class PlaceDetailScreen extends StatelessWidget {
                           MarkerLayer(
                             markers: [
                               Marker(
-                                point: LatLng(place.latitude, place.longitude),
+                                point: LatLng(
+                                  widget.place.latitude,
+                                  widget.place.longitude,
+                                ),
                                 width: 40,
                                 height: 40,
                                 builder: (ctx) => const Icon(
@@ -346,7 +390,7 @@ class PlaceDetailScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            place.location,
+                            widget.place.location,
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(fontWeight: FontWeight.w500),
                             maxLines: 2,
@@ -389,19 +433,16 @@ class PlaceDetailScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.star, color: Colors.amber),
                       const SizedBox(width: 8),
-                      Text(place.rating.toStringAsFixed(1)),
+                      Text(widget.place.rating.toStringAsFixed(1)),
                       const SizedBox(width: 12),
                       Consumer<PlaceProvider>(
                         builder: (context, provider, _) {
                           final p = provider.places.firstWhere(
-                            (e) => e.id == place.id,
-                            orElse: () => place,
+                            (e) => e.id == widget.place.id,
+                            orElse: () => widget.place,
                           );
-                          final reviewCount = p.comments.isNotEmpty
-                              ? p.comments.length
-                              : p.commentCount;
                           return Text(
-                            '($reviewCount ${loc.translate('reviews')})',
+                            '(${p.commentCount} ${loc.translate('reviews')})',
                             style: Theme.of(context).textTheme.bodySmall,
                           );
                         },
@@ -413,8 +454,8 @@ class PlaceDetailScreen extends StatelessWidget {
                   Consumer<PlaceProvider>(
                     builder: (context, provider, _) {
                       final p = provider.places.firstWhere(
-                        (e) => e.id == place.id,
-                        orElse: () => place,
+                        (e) => e.id == widget.place.id,
+                        orElse: () => widget.place,
                       );
                       if (p.comments.isEmpty) {
                         return Text(loc.translate('no_reviews_yet'));
@@ -430,17 +471,39 @@ class PlaceDetailScreen extends StatelessWidget {
                             ),
                             title: Row(
                               children: [
-                                for (int i = 0; i < c.rating; i++)
-                                  const Icon(
-                                    Icons.star,
-                                    size: 16,
-                                    color: Colors.amber,
+                                Expanded(
+                                  child: Text(
+                                    c.author.isNotEmpty
+                                        ? c.author
+                                        : 'Anonymous',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
+                                ),
+                                Text(
+                                  _timeAgo(c.timestamp),
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Row(
+                                  children: [
+                                    for (int i = 0; i < c.rating; i++)
+                                      const Icon(
+                                        Icons.star,
+                                        size: 16,
+                                        color: Colors.amber,
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
                                 Text(c.text),
                                 if (imagePath != null &&
                                     imagePath.trim().isNotEmpty) ...[

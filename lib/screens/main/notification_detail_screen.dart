@@ -46,7 +46,7 @@ class NotificationDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isUnread
-                    ? Theme.of(context).primaryColor.withOpacity(0.06)
+                    ? Theme.of(context).primaryColor.withValues(alpha: 0.06)
                     : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
               ),

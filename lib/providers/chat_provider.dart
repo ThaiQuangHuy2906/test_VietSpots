@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vietspots/models/chat_model.dart';
-import 'package:vietspots/utils/mock_data.dart';
+import 'package:vietspots/services/chat_service.dart';
+import 'package:vietspots/services/place_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class ChatConversation {
   ChatConversation({
@@ -19,12 +21,34 @@ class ChatConversation {
 }
 
 class ChatProvider with ChangeNotifier {
+  final ChatService _chatService;
+  final PlaceService _placeService;
   final List<ChatMessage> _messages = [];
+  bool _isLoading = false;
+  Position? _userPosition;
 
   // In-session history (FACT): project has no local storage dependency
   // (no shared_preferences/hive/etc), so we keep history in memory.
   final List<ChatConversation> _history = [];
   String? _activeConversationId;
+
+  ChatProvider(this._chatService, this._placeService) {
+    _getUserLocation();
+  }
+
+  bool get isLoading => _isLoading;
+
+  Future<void> _getUserLocation() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+      _userPosition = await Geolocator.getCurrentPosition();
+    } catch (e) {
+      // Silently handle location error
+    }
+  }
 
   List<ChatMessage> get messages => _messages;
   List<ChatConversation> get history => List.unmodifiable(_history);
@@ -104,10 +128,8 @@ class ChatProvider with ChangeNotifier {
     _messages.add(userMsg);
     notifyListeners();
 
-    // Simulate Bot Response
-    Future.delayed(const Duration(seconds: 1), () {
-      _generateBotResponse(text);
-    });
+    // Call real backend API
+    _generateBotResponse(text);
   }
 
   void clearMessages() {
@@ -128,38 +150,110 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _generateBotResponse(String userText) {
-    String botText = "I'm sorry, I didn't understand that.";
-    List<dynamic>? places;
-
-    if (userText.toLowerCase().contains("quận 12")) {
-      botText = "Here are some interesting places in District 12 for you:";
-      places = MockDataService.district12Places;
-    } else {
-      botText =
-          "I can help you find places to visit. Try asking about 'District 12'.";
-    }
-
-    // Fix casting properly
-    final botMsgFixed = ChatMessage(
-      id: DateTime.now().toString(),
-      text: botText,
-      isUser: false,
-      timestamp: DateTime.now(),
-      relatedPlaces: places != null ? List.from(places) : null,
-    );
-
-    // Append to active conversation (if exists).
-    final activeId = _activeConversationId;
-    if (activeId != null) {
-      final conv = _findConversation(activeId);
-      if (conv != null) {
-        conv.messages.add(botMsgFixed);
-        conv.updatedAt = DateTime.now();
-      }
-    }
-
-    _messages.add(botMsgFixed);
+  Future<void> _generateBotResponse(String userText) async {
+    _isLoading = true;
     notifyListeners();
+
+    try {
+      // Call backend chat API (timeout handled in service layer)
+      final response = await _chatService.chat(
+        ChatRequest(
+          message: userText,
+          sessionId: _activeConversationId ?? 'default-session',
+          userLat: _userPosition?.latitude,
+          userLon: _userPosition?.longitude,
+        ),
+      );
+
+      // Convert PlaceDTO to Place for display
+      final places = response.places.map((dto) => dto.toPlace()).toList();
+
+      // Create bot message with response
+      final botMsg = ChatMessage(
+        id: DateTime.now().toString(),
+        text: response.answer,
+        isUser: false,
+        timestamp: DateTime.now(),
+        relatedPlaces: places.isNotEmpty ? places : null,
+      );
+
+      // Append to active conversation
+      final activeId = _activeConversationId;
+      if (activeId != null) {
+        final conv = _findConversation(activeId);
+        if (conv != null) {
+          conv.messages.add(botMsg);
+          conv.updatedAt = DateTime.now();
+        }
+      }
+
+      _messages.add(botMsg);
+    } catch (e) {
+      // Debug: Log the actual error
+      debugPrint('❌ Chat API Error: $e');
+      debugPrint('Error type: ${e.runtimeType}');
+
+      // Try graceful fallback: suggest nearby top-rated places
+      try {
+        final dtos = await _placeService.getPlaces(
+          limit: 5,
+          lat: _userPosition?.latitude,
+          lon: _userPosition?.longitude,
+          maxDistance: 50,
+          sortBy: 'rating',
+          minRating: 0.1,
+        );
+        final places = dtos.map((d) => d.toPlace()).toList();
+        final fallbackMsg = ChatMessage(
+          id: DateTime.now().toString(),
+          text: 'Kết nối chậm nên tạm gợi ý nhanh một số địa điểm gần bạn nhé:',
+          isUser: false,
+          timestamp: DateTime.now(),
+          relatedPlaces: places,
+        );
+        final activeId = _activeConversationId;
+        if (activeId != null) {
+          final conv = _findConversation(activeId);
+          if (conv != null) {
+            conv.messages.add(fallbackMsg);
+            conv.updatedAt = DateTime.now();
+          }
+        }
+        _messages.add(fallbackMsg);
+      } catch (e2) {
+        // Fallback to error message
+        String errorText = 'Xin lỗi, tôi gặp vấn đề khi xử lý yêu cầu của bạn.';
+
+        if (e.toString().contains('Backend đang quá tải') ||
+            e.toString().contains('TimeoutException')) {
+          errorText =
+              'Kết nối với server quá lâu. Vui lòng kiểm tra mạng và thử lại. 📡';
+        } else if (e.toString().contains('SocketException')) {
+          errorText =
+              'Không có kết nối internet. Vui lòng kiểm tra mạng của bạn. 📶';
+        }
+
+        final errorMsg = ChatMessage(
+          id: DateTime.now().toString(),
+          text: errorText,
+          isUser: false,
+          timestamp: DateTime.now(),
+        );
+
+        final activeId = _activeConversationId;
+        if (activeId != null) {
+          final conv = _findConversation(activeId);
+          if (conv != null) {
+            conv.messages.add(errorMsg);
+            conv.updatedAt = DateTime.now();
+          }
+        }
+
+        _messages.add(errorMsg);
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -14,6 +14,7 @@ import 'package:vietspots/services/api_service.dart';
 import 'package:vietspots/services/image_service.dart';
 import 'package:vietspots/services/place_service.dart';
 import 'package:vietspots/services/chat_service.dart';
+import 'package:vietspots/services/storage_service.dart';
 
 import 'test_app.dart';
 
@@ -32,6 +33,7 @@ void main() {
         imageService: imageService,
         placeService: placeService,
         chatService: chatService,
+        storageService: StorageService(),
       ),
     );
 

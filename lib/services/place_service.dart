@@ -305,6 +305,22 @@ class PlaceService {
     String? search,
     String sortBy = 'rating',
   }) async {
+    // If a search query is provided, call the dedicated search RPC endpoint
+    // `/places/search` which runs fuzzy search on the DB.
+    if (search != null && search.trim().isNotEmpty) {
+      final response = await _api.get(
+        '/places/search',
+        queryParams: {
+          'keyword': search,
+          if (lat != null) 'lat': lat,
+          if (lon != null) 'lon': lon,
+          'limit': limit,
+        },
+      );
+
+      return (response as List).map((e) => PlaceDTO.fromJson(e)).toList();
+    }
+
     final response = await _api.get(
       '/places',
       queryParams: {
@@ -316,7 +332,6 @@ class PlaceService {
         if (location != null) 'location': location,
         if (categories != null) 'categories': categories,
         if (minRating != null) 'min_rating': minRating,
-        if (search != null) 'search': search,
         'sort_by': sortBy,
       },
     );

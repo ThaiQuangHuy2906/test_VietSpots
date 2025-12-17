@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
+// dart:typed_data is not needed; `Uint8List` is available via foundation
 import 'package:provider/provider.dart';
 import 'package:vietspots/models/place_model.dart';
 import 'package:vietspots/providers/place_provider.dart';
@@ -13,6 +13,9 @@ import 'package:vietspots/providers/localization_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vietspots/services/comment_service.dart';
 import 'package:vietspots/services/api_service.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:vietspots/services/image_service.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final Place place;
@@ -533,15 +536,59 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                                   const SizedBox(height: 8),
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      File(imagePath),
-                                      height: 160,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
+                                    child: Builder(
+                                      builder: (context) {
+                                        // imagePath may be a network URL, data URI, or local file path
+                                        if (imagePath.startsWith('http')) {
+                                          return CachedNetworkImage(
+                                            imageUrl: imagePath,
+                                            height: 160,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            placeholder: (c, u) => Container(
+                                              height: 160,
+                                              color: Colors.grey[200],
+                                            ),
+                                            errorWidget: (c, u, e) =>
+                                                const SizedBox.shrink(),
+                                          );
+                                        }
+
+                                        if (imagePath.startsWith('data:')) {
+                                          try {
+                                            final base64Str = imagePath
+                                                .split(',')
+                                                .last;
+                                            final bytes = base64Decode(
+                                              base64Str,
+                                            );
+                                            return Image.memory(
+                                              bytes,
+                                              height: 160,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            );
+                                          } catch (_) {
                                             return const SizedBox.shrink();
-                                          },
+                                          }
+                                        }
+
+                                        // Fallback: local file (mobile)
+                                        try {
+                                          return Image.file(
+                                            File(imagePath),
+                                            height: 160,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return const SizedBox.shrink();
+                                                },
+                                          );
+                                        } catch (_) {
+                                          return const SizedBox.shrink();
+                                        }
+                                      },
                                     ),
                                   ),
                                 ],
@@ -619,7 +666,9 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
       author: 'You',
       rating: _rating,
       text: _controller.text.trim(),
-      imagePath: _image?.path,
+      imagePath: kIsWeb && _imageBytes != null
+          ? 'data:image/${(_image?.name.split('.').last ?? 'jpg')};base64,${base64Encode(_imageBytes!)}'
+          : _image?.path,
       timestamp: DateTime.now(),
     );
 
@@ -646,13 +695,32 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
     try {
       final api = Provider.of<ApiService>(widget.rootContext, listen: false);
       final service = CommentService(api);
+      final imageService = Provider.of<ImageService>(
+        widget.rootContext,
+        listen: false,
+      );
 
       // Prepare image URLs if there's an image
       List<String> imageUrls = [];
       if (_imageBytes != null) {
-        // In a real app, upload the image first and get the URL
-        // For now, we'll pass it as a base64 or just skip it
-        // TODO: Implement image upload
+        try {
+          if (kIsWeb) {
+            // On web upload from bytes
+            final filename = _image?.name ?? 'upload.jpg';
+            final uploadResponse = await imageService.uploadImagesFromBytes(
+              [_imageBytes!],
+              [filename],
+            );
+            if (uploadResponse.success) imageUrls.addAll(uploadResponse.urls);
+          } else {
+            // Mobile: upload from File path
+            final file = File(_image!.path);
+            final uploadResponse = await imageService.uploadImages([file]);
+            if (uploadResponse.success) imageUrls.addAll(uploadResponse.urls);
+          }
+        } catch (e) {
+          debugPrint('Image upload failed: $e');
+        }
       }
 
       final response = await service.createComment(

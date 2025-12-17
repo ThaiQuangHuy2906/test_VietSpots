@@ -57,6 +57,13 @@ dependencies:
 
   # Networking
   http: ^0.13.6
+  
+  # Supabase client for storage and auth
+  supabase_flutter: ^1.4.0
+  # Mime type lookup for uploads
+  mime: ^1.0.0
+  # Parse MediaType for multipart content-type
+  http_parser: ^4.0.0
 
 dev_dependencies:
   flutter_test:

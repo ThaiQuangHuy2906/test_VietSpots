@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
+import 'dart:typed_data';
 
 /// Base API configuration
 class ApiConfig {
@@ -155,6 +158,52 @@ class ApiService {
     for (final file in files) {
       request.files.add(
         await http.MultipartFile.fromPath(fieldName, file.path),
+      );
+    }
+
+    try {
+      final streamedResponse = await request.send().timeout(ApiConfig.timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      return _handleResponse(response);
+    } on SocketException {
+      throw ApiException(statusCode: 0, message: 'No internet connection');
+    }
+  }
+
+  /// Upload files from bytes (works on Web)
+  Future<dynamic> uploadFilesBytes(
+    String endpoint,
+    List<Uint8List> filesBytes,
+    List<String> filenames, {
+    String fieldName = 'files',
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    final request = http.MultipartRequest('POST', uri);
+
+    // Add headers - include both X-User-ID and Authorization Bearer token
+    request.headers.addAll({
+      if (_userId != null) 'X-User-ID': _userId!,
+      if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+    });
+
+    for (int i = 0; i < filesBytes.length; i++) {
+      final name = i < filenames.length ? filenames[i] : 'file_$i.jpg';
+      final mimeType = lookupMimeType(name) ?? 'application/octet-stream';
+      MediaType? mediaType;
+      try {
+        final parts = mimeType.split('/');
+        mediaType = MediaType(parts[0], parts[1]);
+      } catch (_) {
+        mediaType = MediaType('application', 'octet-stream');
+      }
+
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          fieldName,
+          filesBytes[i],
+          filename: name,
+          contentType: mediaType,
+        ),
       );
     }
 

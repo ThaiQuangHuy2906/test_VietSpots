@@ -5,6 +5,7 @@ import 'package:vietspots/providers/localization_provider.dart';
 import 'package:vietspots/providers/place_provider.dart';
 import 'package:vietspots/screens/detail/place_detail_screen.dart';
 import 'package:vietspots/utils/theme.dart';
+import 'package:vietspots/services/place_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -36,22 +37,40 @@ class _SearchScreenState extends State<SearchScreen> {
       context,
       listen: false,
     ).locale.languageCode;
-
+    // Simple client-side filter first (fast). If no results, call backend search.
     setState(() {
       if (query.isEmpty) {
         _filteredPlaces = places;
-      } else {
-        _filteredPlaces = places.where((place) {
-          return place
-                  .localizedName(locale)
-                  .toLowerCase()
-                  .contains(query.toLowerCase()) ||
-              place.location.toLowerCase().contains(query.toLowerCase()) ||
-              (place.location.isNotEmpty &&
-                  place.location.toLowerCase().contains(query.toLowerCase()));
-        }).toList();
+        return;
       }
+
+      _filteredPlaces = places.where((place) {
+        final name = place.localizedName(locale).toLowerCase();
+        final loc = place.location.toLowerCase();
+        final q = query.toLowerCase();
+        return name.contains(q) || loc.contains(q);
+      }).toList();
     });
+
+    // If client-side did not find matches, try server-side search
+    if (_filteredPlaces.isEmpty && query.trim().length >= 2) {
+      _performServerSearch(query.trim());
+    }
+  }
+
+  Future<void> _performServerSearch(String query) async {
+    try {
+      final placeService = Provider.of<PlaceService>(context, listen: false);
+      final dtos = await placeService.getPlaces(search: query, limit: 50);
+      final results = dtos.map((d) => d.toPlace()).toList();
+      if (mounted) {
+        setState(() {
+          _filteredPlaces = results;
+        });
+      }
+    } catch (e) {
+      debugPrint('Server search failed: $e');
+    }
   }
 
   @override

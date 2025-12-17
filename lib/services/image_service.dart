@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'comment_service.dart';
 
@@ -42,8 +43,22 @@ class ImageService {
   }
 
   /// POST /api/upload - Upload images
+  /// POST /upload - Upload images (ApiConfig.baseUrl already contains /api prefix)
   Future<ImageUploadResponse> uploadImages(List<File> files) async {
-    final response = await _api.uploadFiles('/api/upload', files);
+    final response = await _api.uploadFiles('/upload', files);
+    return ImageUploadResponse.fromJson(response);
+  }
+
+  /// Upload images from bytes (for Web)
+  Future<ImageUploadResponse> uploadImagesFromBytes(
+    List<Uint8List> filesBytes,
+    List<String> filenames,
+  ) async {
+    final response = await _api.uploadFilesBytes(
+      '/upload',
+      filesBytes,
+      filenames,
+    );
     return ImageUploadResponse.fromJson(response);
   }
 }

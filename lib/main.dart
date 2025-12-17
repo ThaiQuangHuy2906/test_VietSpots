@@ -12,14 +12,28 @@ import 'package:vietspots/services/api_service.dart';
 import 'package:vietspots/services/image_service.dart';
 import 'package:vietspots/services/place_service.dart';
 import 'package:vietspots/services/chat_service.dart';
+import 'package:vietspots/services/storage_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:vietspots/services/auth_service.dart';
 import 'package:vietspots/utils/theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Initialize API services
   final apiService = ApiService();
   final imageService = ImageService(apiService);
   final placeService = PlaceService(apiService);
   final chatService = ChatService(apiService);
+
+  // Initialize Supabase (uses SupabaseConfig in auth_service.dart)
+  await Supabase.initialize(
+    url: SupabaseConfig.supabaseUrl,
+    anonKey: SupabaseConfig.supabaseAnonKey,
+  );
+
+  // Storage service for uploading images to Supabase
+  final storageService = StorageService();
 
   runApp(
     VietSpotsApp(
@@ -27,6 +41,7 @@ void main() {
       imageService: imageService,
       placeService: placeService,
       chatService: chatService,
+      storageService: storageService,
     ),
   );
 }
@@ -36,13 +51,14 @@ class VietSpotsApp extends StatelessWidget {
   final ImageService imageService;
   final PlaceService placeService;
   final ChatService chatService;
-
+  final StorageService storageService;
   const VietSpotsApp({
     super.key,
     required this.apiService,
     required this.imageService,
     required this.placeService,
     required this.chatService,
+    required this.storageService,
   });
 
   @override
@@ -54,6 +70,7 @@ class VietSpotsApp extends StatelessWidget {
         Provider<ImageService>.value(value: imageService),
         Provider<PlaceService>.value(value: placeService),
         Provider<ChatService>.value(value: chatService),
+        Provider<StorageService>.value(value: storageService),
         // Providers with dependencies
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),

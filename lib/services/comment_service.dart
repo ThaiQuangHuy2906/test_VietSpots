@@ -50,10 +50,32 @@ class CommentDTO {
       text: text ?? '',
       rating: (rating ?? 5).toInt(),
       imagePath: images.isNotEmpty ? images.first.url : null,
-      timestamp: date != null
-          ? DateTime.tryParse(date!) ?? DateTime.now()
-          : DateTime.now(),
+      timestamp: date != null ? _parseTimestamp(date!) : DateTime.now(),
     );
+  }
+
+  // Parse timestamp returned from backend. If the string has no timezone
+  // information, assume UTC (common for some DBs) to avoid local-time
+  // offset issues that make recent comments appear hours older.
+  static DateTime _parseTimestamp(String s) {
+    // If contains timezone offset or 'Z', parse directly
+    if (s.contains('Z') || s.contains('+') || s.contains('-')) {
+      return DateTime.tryParse(s) ?? DateTime.now();
+    }
+
+    // Try parse as local first, if that gives a time far in the past,
+    // attempt parsing as UTC by appending 'Z'.
+    final parsedLocal = DateTime.tryParse(s);
+    if (parsedLocal != null) return parsedLocal;
+
+    try {
+      return DateTime.parse(
+        '$s'
+        'Z',
+      );
+    } catch (_) {
+      return DateTime.now();
+    }
   }
 }
 

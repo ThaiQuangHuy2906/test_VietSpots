@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:vietspots/models/chat_model.dart';
 import 'package:vietspots/providers/chat_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
@@ -15,22 +17,15 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
-  bool _isTyping = false;
   int _lastRenderedItemCount = 0;
 
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
-    setState(() => _isTyping = true);
     Provider.of<ChatProvider>(
       context,
       listen: false,
     ).sendMessage(_controller.text);
     _controller.clear();
-
-    // Simulate typing delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _isTyping = false);
-    });
   }
 
   void _scrollToBottom() {
@@ -70,7 +65,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
     final loc = Provider.of<LocalizationProvider>(context);
-    final currentItemCount = chatProvider.messages.length + (_isTyping ? 1 : 0);
+    final isTyping = chatProvider.isLoading;
+    final currentItemCount = chatProvider.messages.length + (isTyping ? 1 : 0);
     if (currentItemCount != _lastRenderedItemCount && currentItemCount > 0) {
       _lastRenderedItemCount = currentItemCount;
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
@@ -225,7 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: chatProvider.messages.isEmpty && !_isTyping
+            child: chatProvider.messages.isEmpty && !isTyping
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 80.0),
@@ -236,7 +232,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              color: Colors.redAccent.withOpacity(25 / 255),
+                              color: Colors.redAccent.withValues(
+                                alpha: 25 / 255,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -271,9 +269,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount:
-                        chatProvider.messages.length + (_isTyping ? 1 : 0),
+                        chatProvider.messages.length + (isTyping ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index == chatProvider.messages.length && _isTyping) {
+                      if (index == chatProvider.messages.length && isTyping) {
                         return _buildTypingIndicator(context);
                       }
                       final msg = chatProvider.messages[index];
@@ -302,12 +300,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[850]?.withOpacity(128 / 255)
+                            ? Colors.grey[850]?.withValues(alpha: 128 / 255)
                             : Colors.grey[200],
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[800]!.withOpacity(102 / 255)
+                              ? Colors.grey[800]!.withValues(alpha: 102 / 255)
                               : Colors.grey[300]!,
                           width: 1,
                         ),
@@ -328,7 +326,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           hintText: loc.translate('chat_hint'),
                           hintStyle: TextStyle(
                             color: Theme.of(context).textTheme.bodyLarge?.color
-                                ?.withOpacity(128 / 255),
+                                ?.withValues(alpha: 128 / 255),
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
@@ -351,7 +349,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.redAccent.withOpacity(77 / 255),
+                          color: Colors.redAccent.withValues(alpha: 77 / 255),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -408,26 +406,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: 20,
-                  height: 10,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(
-                      3,
-                      (i) => AnimatedContainer(
-                        duration: Duration(milliseconds: 400 + i * 200),
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          shape: BoxShape.circle,
-                        ),
-                        curve: Curves.easeInOut,
-                      ),
-                    ),
-                  ),
-                ),
+                const SizedBox(width: 24, height: 14, child: _BouncingDots()),
               ],
             ),
           ),
@@ -475,19 +454,59 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    msg.text,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : Colors.black87,
-                      fontSize: 16,
+                  // Use MarkdownBody for better formatting
+                  MarkdownBody(
+                    data: msg.text,
+                    styleSheet: MarkdownStyleSheet(
+                      p: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                      h1: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                      h2: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                      h3: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                      strong: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      em: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      listBullet: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                      listIndent: 24,
+                      blockSpacing: 12,
+                      listBulletPadding: const EdgeInsets.only(right: 8),
+                      pPadding: const EdgeInsets.symmetric(vertical: 4),
                     ),
+                    selectable: true,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _formatTimestamp(msg.timestamp),
                     style: TextStyle(
                       color: isUser
-                          ? Colors.white.withOpacity(0.7)
+                          ? Colors.white.withValues(alpha: 0.7)
                           : Colors.grey[600],
                       fontSize: 11,
                     ),
@@ -536,5 +555,61 @@ class _ChatScreenState extends State<ChatScreen> {
     } else {
       return '${difference.inDays}d ago';
     }
+  }
+}
+
+class _BouncingDots extends StatefulWidget {
+  const _BouncingDots();
+
+  @override
+  State<_BouncingDots> createState() => _BouncingDotsState();
+}
+
+class _BouncingDotsState extends State<_BouncingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(seconds: 1))
+      ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        double v(int i) =>
+            (1 +
+                (0.6 *
+                    (1 + math.sin(2 * 3.1415926 * (_c.value + (i * 0.15)))))) /
+            2;
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(3, (i) {
+            final scale = 0.6 + 0.4 * v(i);
+            return Transform.translate(
+              offset: Offset(0, -3 * v(i)),
+              child: Container(
+                width: 4 * scale,
+                height: 4 * scale,
+                decoration: BoxDecoration(
+                  color: Colors.grey[500],
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
   }
 }

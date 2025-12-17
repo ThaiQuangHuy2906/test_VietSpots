@@ -8,23 +8,59 @@ import 'package:vietspots/providers/theme_provider.dart';
 import 'package:vietspots/screens/main/main_screen.dart';
 import 'package:vietspots/screens/splash_screen.dart';
 import 'package:vietspots/screens/auth/login_screen.dart';
+import 'package:vietspots/services/api_service.dart';
+import 'package:vietspots/services/image_service.dart';
+import 'package:vietspots/services/place_service.dart';
+import 'package:vietspots/services/chat_service.dart';
 import 'package:vietspots/utils/theme.dart';
 
 void main() {
-  runApp(const VietSpotsApp());
+  // Initialize API services
+  final apiService = ApiService();
+  final imageService = ImageService(apiService);
+  final placeService = PlaceService(apiService);
+  final chatService = ChatService(apiService);
+
+  runApp(
+    VietSpotsApp(
+      apiService: apiService,
+      imageService: imageService,
+      placeService: placeService,
+      chatService: chatService,
+    ),
+  );
 }
 
 class VietSpotsApp extends StatelessWidget {
-  const VietSpotsApp({super.key});
+  final ApiService apiService;
+  final ImageService imageService;
+  final PlaceService placeService;
+  final ChatService chatService;
+
+  const VietSpotsApp({
+    super.key,
+    required this.apiService,
+    required this.imageService,
+    required this.placeService,
+    required this.chatService,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Provide services
+        Provider<ApiService>.value(value: apiService),
+        Provider<ImageService>.value(value: imageService),
+        Provider<PlaceService>.value(value: placeService),
+        Provider<ChatService>.value(value: chatService),
+        // Providers with dependencies
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => PlaceProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
+        ChangeNotifierProvider(
+          create: (_) => ChatProvider(chatService, placeService),
+        ),
+        ChangeNotifierProvider(create: (_) => PlaceProvider(placeService)),
         ChangeNotifierProvider(create: (_) => LocalizationProvider()),
       ],
       child: Consumer<ThemeProvider>(

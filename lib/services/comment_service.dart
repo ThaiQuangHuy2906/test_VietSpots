@@ -1,0 +1,180 @@
+import 'api_service.dart';
+import '../models/place_model.dart';
+
+/// Comment API DTO
+class CommentDTO {
+  final String id;
+  final String placeId;
+  final String? userId;
+  final String? author;
+  final double? rating;
+  final String? text;
+  final String? date;
+  final List<ImageDTO> images;
+
+  CommentDTO({
+    required this.id,
+    required this.placeId,
+    this.userId,
+    this.author,
+    this.rating,
+    this.text,
+    this.date,
+    this.images = const [],
+  });
+
+  factory CommentDTO.fromJson(Map<String, dynamic> json) {
+    return CommentDTO(
+      id: json['id'] ?? '',
+      placeId: json['place_id'] ?? '',
+      userId: json['user_id'],
+      // Backend may return 'author' or 'author_name'
+      author: json['author'] ?? json['author_name'],
+      rating: (json['rating'] as num?)?.toDouble(),
+      text: json['text'],
+      // Accept various date keys
+      date: json['date'] ?? json['created_at'] ?? json['timestamp'],
+      images:
+          (json['images'] as List<dynamic>?)
+              ?.map((e) => ImageDTO.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+
+  /// Convert to app's PlaceComment model
+  PlaceComment toPlaceComment() {
+    return PlaceComment(
+      id: id,
+      author: author ?? 'Anonymous',
+      text: text ?? '',
+      rating: (rating ?? 5).toInt(),
+      imagePath: images.isNotEmpty ? images.first.url : null,
+      timestamp: date != null
+          ? DateTime.tryParse(date!) ?? DateTime.now()
+          : DateTime.now(),
+    );
+  }
+}
+
+/// Image API DTO
+class ImageDTO {
+  final String id;
+  final String url;
+  final String? placeId;
+  final String? commentId;
+  final bool? isScraped;
+  final String? uploadedAt;
+
+  ImageDTO({
+    required this.id,
+    required this.url,
+    this.placeId,
+    this.commentId,
+    this.isScraped,
+    this.uploadedAt,
+  });
+
+  factory ImageDTO.fromJson(Map<String, dynamic> json) {
+    return ImageDTO(
+      id: json['id'] ?? '',
+      url: json['url'] ?? '',
+      placeId: json['place_id'],
+      commentId: json['comment_id'],
+      isScraped: json['is_scraped'],
+      uploadedAt: json['uploaded_at'],
+    );
+  }
+}
+
+/// Service for Comments API
+class CommentService {
+  final ApiService _api;
+
+  CommentService(this._api);
+
+  /// GET /places/{place_id}/comments - Get place comments
+  Future<List<CommentDTO>> getPlaceComments(
+    String placeId, {
+    int limit = 20,
+    int offset = 0,
+    String orderBy = 'recent',
+  }) async {
+    final response = await _api.get(
+      '/places/$placeId/comments',
+      queryParams: {'limit': limit, 'offset': offset, 'order_by': orderBy},
+    );
+
+    return (response as List).map((e) => CommentDTO.fromJson(e)).toList();
+  }
+
+  /// POST /comments - Create new comment
+  Future<ApiResponse> createComment({
+    required String placeId,
+    String? userId,
+    String authorName = 'Khách tham quan',
+    int rating = 5,
+    String? text,
+    List<String> imageUrls = const [],
+  }) async {
+    final response = await _api.post(
+      '/comments',
+      body: {
+        'place_id': placeId,
+        if (userId != null) 'user_id': userId,
+        'author_name': authorName,
+        'rating': rating,
+        if (text != null) 'text': text,
+        'image_urls': imageUrls,
+      },
+    );
+
+    return ApiResponse.fromJson(response, null);
+  }
+
+  /// PUT /comments/{comment_id} - Update comment
+  Future<ApiResponse> updateComment(
+    String commentId, {
+    String? authorName,
+    int? rating,
+    String? text,
+  }) async {
+    final response = await _api.put(
+      '/comments/$commentId',
+      body: {
+        if (authorName != null) 'author_name': authorName,
+        if (rating != null) 'rating': rating,
+        if (text != null) 'text': text,
+      },
+    );
+
+    return ApiResponse.fromJson(response, null);
+  }
+
+  /// DELETE /comments/{comment_id} - Delete comment
+  Future<ApiResponse> deleteComment(String commentId) async {
+    final response = await _api.delete('/comments/$commentId');
+    return ApiResponse.fromJson(response, null);
+  }
+
+  /// POST /comments/{comment_id}/images - Add images to comment
+  Future<ApiResponse> addImagesToComment(
+    String commentId,
+    List<String> imageUrls,
+  ) async {
+    final response = await _api.post(
+      '/comments/$commentId/images',
+      body: {'image_urls': imageUrls},
+    );
+    return ApiResponse.fromJson(response, null);
+  }
+
+  /// DELETE /comments/{comment_id}/images/{image_id} - Delete comment image
+  Future<ApiResponse> deleteCommentImage(
+    String commentId,
+    String imageId,
+  ) async {
+    final response = await _api.delete('/comments/$commentId/images/$imageId');
+    return ApiResponse.fromJson(response, null);
+  }
+}

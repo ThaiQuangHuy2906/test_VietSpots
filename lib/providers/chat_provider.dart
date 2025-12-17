@@ -168,10 +168,38 @@ class ChatProvider with ChangeNotifier {
       // Convert PlaceDTO to Place for display
       final places = response.places.map((dto) => dto.toPlace()).toList();
 
+      // Debug: Print the actual text received
+      debugPrint('📝 Response text length: ${response.answer.length}');
+      debugPrint(
+        '📝 Response text (first 500 chars): ${response.answer.substring(0, response.answer.length > 500 ? 500 : response.answer.length)}',
+      );
+      debugPrint('📝 Contains \\n: ${response.answer.contains('\n')}');
+      debugPrint('📝 Contains \\r\\n: ${response.answer.contains('\r\n')}');
+
+      // Fix markdown formatting: ensure proper spacing for list items
+      // Replace single newlines between numbered items with double newlines
+      String formattedText = response.answer;
+
+      // Add blank line before numbered list items (except at the start)
+      formattedText = formattedText.replaceAllMapped(
+        RegExp(r'([^\n])\n(\d+\.\s+\*\*)', multiLine: true),
+        (match) => '${match.group(1)}\n\n${match.group(2)}',
+      );
+
+      // Also handle regular numbered items without bold
+      formattedText = formattedText.replaceAllMapped(
+        RegExp(r'([^\n])\n(\d+\.\s+[^\*\n])', multiLine: true),
+        (match) => '${match.group(1)}\n\n${match.group(2)}',
+      );
+
+      debugPrint(
+        '📝 Formatted text (first 500 chars): ${formattedText.substring(0, formattedText.length > 500 ? 500 : formattedText.length)}',
+      );
+
       // Create bot message with response
       final botMsg = ChatMessage(
         id: DateTime.now().toString(),
-        text: response.answer,
+        text: formattedText,
         isUser: false,
         timestamp: DateTime.now(),
         relatedPlaces: places.isNotEmpty ? places : null,

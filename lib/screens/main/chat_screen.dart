@@ -492,10 +492,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       listBullet: TextStyle(
                         color: isUser ? Colors.white : Colors.black87,
                         fontSize: 15,
+                        height: 1.5,
                       ),
                       listIndent: 24,
-                      blockSpacing: 8,
+                      blockSpacing: 12,
                       listBulletPadding: const EdgeInsets.only(right: 8),
+                      pPadding: const EdgeInsets.symmetric(vertical: 4),
                     ),
                     selectable: true,
                   ),

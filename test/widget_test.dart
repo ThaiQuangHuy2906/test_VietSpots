@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vietspots/main.dart';
 import 'package:vietspots/screens/main/main_screen.dart';
 import 'package:vietspots/services/api_service.dart';
+import 'package:vietspots/services/image_service.dart';
 import 'package:vietspots/services/place_service.dart';
 import 'package:vietspots/services/chat_service.dart';
 
@@ -20,6 +21,7 @@ void main() {
   testWidgets('App launches without crashing', (WidgetTester tester) async {
     // Create test services
     final apiService = ApiService();
+    final imageService = ImageService(apiService);
     final placeService = PlaceService(apiService);
     final chatService = ChatService(apiService);
 
@@ -27,6 +29,7 @@ void main() {
     await tester.pumpWidget(
       VietSpotsApp(
         apiService: apiService,
+        imageService: imageService,
         placeService: placeService,
         chatService: chatService,
       ),

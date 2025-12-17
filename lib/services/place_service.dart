@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'api_service.dart';
 import '../models/place_model.dart';
 
@@ -81,15 +82,63 @@ class PlaceDTO {
   }
 
   /// Format about object into human-readable text
-  String _formatAbout(Map<String, dynamic> aboutData) {
+  String _formatAbout(dynamic aboutData) {
+    // Handle case where aboutData might be a string representation of a Python dict
+    if (aboutData is! Map) {
+      if (aboutData is String) {
+        // Check if it's a Python dict representation like {'key': 'value', ...}
+        final strData = aboutData.toString().trim();
+        if (strData.startsWith('{') && strData.endsWith('}')) {
+          // Try to convert Python dict to JSON and parse
+          try {
+            // Convert Python dict to JSON format
+            String jsonStr = strData
+                .replaceAll(
+                  "'",
+                  '"',
+                ) // Replace single quotes with double quotes
+                .replaceAll('True', 'true')
+                .replaceAll('False', 'false')
+                .replaceAll('None', 'null');
+            final parsed = jsonDecode(jsonStr);
+            if (parsed is Map) {
+              return _formatAboutMap(parsed.cast<String, dynamic>());
+            }
+          } catch (e) {
+            // If parsing fails, return a cleaned up version
+            return 'Không có thông tin chi tiết.';
+          }
+        }
+        // If it's a simple text description
+        if (strData.length < 500 &&
+            !strData.contains("'parking':") &&
+            !strData.contains('"parking":')) {
+          return strData;
+        }
+        return 'Không có thông tin chi tiết.';
+      }
+      return 'Không có thông tin chi tiết.';
+    }
+
+    // aboutData is a Map at this point
+    if (aboutData is Map<String, dynamic>) {
+      return _formatAboutMap(aboutData);
+    }
+    // ignore: unnecessary_cast
+    return _formatAboutMap(Map<String, dynamic>.from(aboutData));
+  }
+
+  /// Format parsed about map into human-readable text
+  String _formatAboutMap(Map<String, dynamic> data) {
     final List<String> sections = [];
 
     // Extract description text if present
-    if (aboutData['description'] != null) {
-      sections.add(aboutData['description'].toString());
+    if (data['description'] != null &&
+        data['description'].toString().isNotEmpty) {
+      sections.add(data['description'].toString());
     }
-    if (aboutData['text'] != null) {
-      sections.add(aboutData['text'].toString());
+    if (data['text'] != null && data['text'].toString().isNotEmpty) {
+      sections.add(data['text'].toString());
     }
 
     // Category labels with emojis
@@ -98,6 +147,7 @@ class PlaceDTO {
       'service_options': '🍽️ Dịch vụ',
       'parking': '🅿️ Đỗ xe',
       'planning': '📋 Đặt chỗ',
+      'payments': '💳 Thanh toán',
       'beverages': '🍺 Đồ uống',
       'highlights': '⭐ Điểm nổi bật',
       'accessibility': '♿ Tiếp cận',
@@ -108,8 +158,9 @@ class PlaceDTO {
       final key = entry.key;
       final label = entry.value;
 
-      if (aboutData[key] is Map) {
-        final Map<String, dynamic> items = aboutData[key];
+      if (data[key] is Map) {
+        final Map<String, dynamic> items = (data[key] as Map)
+            .cast<String, dynamic>();
         final enabledItems = items.entries
             .where((e) => e.value == true)
             .map((e) => '• ${e.key}')
@@ -125,17 +176,91 @@ class PlaceDTO {
         : 'Không có thông tin chi tiết.';
   }
 
-  /// Format opening hours into readable text
-  String? _formatOpeningHours(Map<String, dynamic> hours) {
+  /// Parse opening hours from string or map
+  Map<String, dynamic>? _parseOpeningHours(dynamic hours) {
+    if (hours == null) return null;
+    if (hours is Map) return hours.cast<String, dynamic>();
+    if (hours is String) {
+      final strData = hours.trim();
+      // Check if it contains 'raw:' prefix
+      if (strData.startsWith('raw:')) {
+        final rawPart = strData.substring(4).trim();
+        return _parseOpeningHours(rawPart);
+      }
+      // Check if it's a Python dict like {'Thứ Hai': '10:00-22:00', ...}
+      if (strData.startsWith('{') && strData.endsWith('}')) {
+        try {
+          String jsonStr = strData
+              .replaceAll("'", '"')
+              .replaceAll('True', 'true')
+              .replaceAll('False', 'false')
+              .replaceAll('None', 'null');
+          final parsed = jsonDecode(jsonStr);
+          if (parsed is Map) {
+            return parsed.cast<String, dynamic>();
+          }
+        } catch (e) {
+          // Return as simple text
+          return {'raw': strData};
+        }
+      }
+      return {'raw': strData};
+    }
+    return null;
+  }
+
+  /// Format opening hours into readable text with line breaks
+  String? _formatOpeningHours(dynamic hoursData) {
+    final hours = _parseOpeningHours(hoursData);
+    if (hours == null || hours.isEmpty) return null;
+
+    // Check for raw string format
+    if (hours.containsKey('raw')) {
+      final raw = hours['raw'].toString();
+      // Try to parse the raw value if it looks like a dict
+      if (raw.startsWith('{')) {
+        final parsed = _parseOpeningHours(raw);
+        if (parsed != null && !parsed.containsKey('raw')) {
+          return _formatOpeningHoursMap(parsed);
+        }
+      }
+      // It's just a simple string
+      return raw;
+    }
+
+    return _formatOpeningHoursMap(hours);
+  }
+
+  /// Format parsed opening hours map
+  String? _formatOpeningHoursMap(Map<String, dynamic> hours) {
     if (hours.isEmpty) return null;
 
-    final entries = hours.entries
-        .map((e) {
-          return '${e.key}: ${e.value}';
-        })
-        .join(', ');
+    // Order days from Monday to Sunday
+    final dayOrder = [
+      'Thứ Hai',
+      'Thứ Ba',
+      'Thứ Tư',
+      'Thứ Năm',
+      'Thứ Sáu',
+      'Thứ Bảy',
+      'Chủ Nhật',
+    ];
 
-    return entries.isNotEmpty ? entries : null;
+    final orderedEntries = <String>[];
+    for (final day in dayOrder) {
+      if (hours.containsKey(day)) {
+        orderedEntries.add('$day: ${hours[day]}');
+      }
+    }
+
+    // Add any remaining days not in the standard order
+    for (final entry in hours.entries) {
+      if (!dayOrder.contains(entry.key)) {
+        orderedEntries.add('${entry.key}: ${entry.value}');
+      }
+    }
+
+    return orderedEntries.isNotEmpty ? orderedEntries.join('\n') : null;
   }
 
   /// Convert to app's Place model

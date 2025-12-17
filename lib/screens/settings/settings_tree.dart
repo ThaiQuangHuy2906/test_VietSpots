@@ -1,9 +1,11 @@
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:vietspots/providers/auth_provider.dart';
 import 'package:vietspots/providers/localization_provider.dart';
+import 'package:vietspots/services/image_service.dart';
 import 'package:vietspots/utils/avatar_image_provider.dart';
 import 'package:vietspots/widgets/avatar_crop_dialog.dart';
 
@@ -64,21 +66,63 @@ class _GeneralInfoScreenState extends State<GeneralInfoScreen> {
     if (croppedPath == null || croppedPath.trim().isEmpty) return;
 
     if (mounted) {
-      Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).updateProfile(avatarUrl: croppedPath);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            Provider.of<LocalizationProvider>(
-              context,
-              listen: false,
-            ).translate('avatar_updated'),
-          ),
-        ),
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
       );
-      setState(() {});
+
+      try {
+        // Upload the avatar image to Supabase
+        final imageFile = io.File(croppedPath);
+        final uploadResponse = await Provider.of<ImageService>(
+          context,
+          listen: false,
+        ).uploadImages([imageFile]);
+
+        // Get the uploaded image URL
+        String? avatarUrl;
+        if (uploadResponse.urls.isNotEmpty) {
+          avatarUrl = uploadResponse.urls.first;
+        }
+
+        // Pop loading dialog
+        if (mounted) Navigator.pop(context);
+
+        // Update profile with the uploaded avatar URL
+        if (mounted) {
+          final success = await Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          ).updateProfile(avatarUrl: avatarUrl);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success
+                      ? Provider.of<LocalizationProvider>(
+                          context,
+                          listen: false,
+                        ).translate('avatar_updated')
+                      : 'Lỗi cập nhật avatar',
+                ),
+              ),
+            );
+            setState(() {});
+          }
+        }
+      } catch (e) {
+        // Pop loading dialog
+        if (mounted) Navigator.pop(context);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi tải lên: ${e.toString()}')),
+          );
+        }
+      }
     }
   }
 

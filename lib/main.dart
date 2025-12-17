@@ -9,6 +9,7 @@ import 'package:vietspots/screens/main/main_screen.dart';
 import 'package:vietspots/screens/splash_screen.dart';
 import 'package:vietspots/screens/auth/login_screen.dart';
 import 'package:vietspots/services/api_service.dart';
+import 'package:vietspots/services/image_service.dart';
 import 'package:vietspots/services/place_service.dart';
 import 'package:vietspots/services/chat_service.dart';
 import 'package:vietspots/utils/theme.dart';
@@ -16,12 +17,14 @@ import 'package:vietspots/utils/theme.dart';
 void main() {
   // Initialize API services
   final apiService = ApiService();
+  final imageService = ImageService(apiService);
   final placeService = PlaceService(apiService);
   final chatService = ChatService(apiService);
 
   runApp(
     VietSpotsApp(
       apiService: apiService,
+      imageService: imageService,
       placeService: placeService,
       chatService: chatService,
     ),
@@ -30,12 +33,14 @@ void main() {
 
 class VietSpotsApp extends StatelessWidget {
   final ApiService apiService;
+  final ImageService imageService;
   final PlaceService placeService;
   final ChatService chatService;
 
   const VietSpotsApp({
     super.key,
     required this.apiService,
+    required this.imageService,
     required this.placeService,
     required this.chatService,
   });
@@ -46,6 +51,7 @@ class VietSpotsApp extends StatelessWidget {
       providers: [
         // Provide services
         Provider<ApiService>.value(value: apiService),
+        Provider<ImageService>.value(value: imageService),
         Provider<PlaceService>.value(value: placeService),
         Provider<ChatService>.value(value: chatService),
         // Providers with dependencies

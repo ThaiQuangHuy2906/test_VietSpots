@@ -56,6 +56,24 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     }
   }
 
+  Future<void> _refreshComments() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đang tải bình luận...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+    await _loadComments();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã cập nhật!'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
   void _openDirections(BuildContext context) {
     Navigator.push(
       context,
@@ -166,6 +184,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: _refreshComments,
+                tooltip: 'Làm mới bình luận',
+              ),
               Consumer<PlaceProvider>(
                 builder: (context, placeProvider, _) {
                   final isFav = placeProvider.isFavorite(widget.place.id);
@@ -277,7 +300,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
+                  SelectableText(
                     widget.place.localizedDescription(locale),
                     style: Theme.of(
                       context,
@@ -305,7 +328,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        '${loc.translate('opening_time')}: ${widget.place.openingTime}',
+                        widget.place.openingTime!,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
@@ -600,10 +623,14 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
       timestamp: DateTime.now(),
     );
 
+    // Add comment locally first
     Provider.of<PlaceProvider>(
       context,
       listen: false,
     ).addComment(widget.placeId, comment);
+
+    // Save comment to Supabase in the background
+    _saveCommentToBackend(comment);
 
     Navigator.pop(context);
     // Use the original page context for SnackBar.
@@ -612,6 +639,37 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
       ScaffoldMessenger.of(
         widget.rootContext,
       ).showSnackBar(SnackBar(content: Text(loc.translate('review_added'))));
+    }
+  }
+
+  Future<void> _saveCommentToBackend(PlaceComment comment) async {
+    try {
+      final api = Provider.of<ApiService>(widget.rootContext, listen: false);
+      final service = CommentService(api);
+
+      // Prepare image URLs if there's an image
+      List<String> imageUrls = [];
+      if (_imageBytes != null) {
+        // In a real app, upload the image first and get the URL
+        // For now, we'll pass it as a base64 or just skip it
+        // TODO: Implement image upload
+      }
+
+      final response = await service.createComment(
+        placeId: widget.placeId,
+        authorName: comment.author,
+        rating: comment.rating,
+        text: comment.text,
+        imageUrls: imageUrls,
+      );
+
+      if (!response.success) {
+        debugPrint('Failed to save comment: ${response.message}');
+      } else {
+        debugPrint('Comment saved successfully');
+      }
+    } catch (e) {
+      debugPrint('Error saving comment to backend: $e');
     }
   }
 

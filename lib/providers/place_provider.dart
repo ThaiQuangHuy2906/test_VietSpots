@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:vietspots/models/place_model.dart';
 import 'package:vietspots/services/place_service.dart';
 import 'package:vietspots/services/api_service.dart';
+import 'package:vietspots/services/comment_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -282,12 +283,55 @@ class PlaceProvider extends ChangeNotifier {
       });
 
       _nearbyPlaces = places;
+
+      // Load comments for nearby places asynchronously (don't block UI)
+      _loadCommentsForPlaces(places);
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading nearby places: $e');
       _nearbyPlaces = [];
       notifyListeners();
     }
+  }
+
+  /// Load comments for multiple places
+  Future<void> _loadCommentsForPlaces(List<Place> places) async {
+    // This runs in the background without blocking UI
+    for (final place in places) {
+      try {
+        final api = ApiService();
+        final service = CommentService(api);
+        final dtos = await service.getPlaceComments(place.id, limit: 3);
+        final comments = dtos.map((d) => d.toPlaceComment()).toList();
+
+        // Update comments for this place
+        final idx = _places.indexWhere((p) => p.id == place.id);
+        if (idx != -1) {
+          final p = _places[idx];
+          final updated = Place(
+            id: p.id,
+            nameLocalized: p.nameLocalized,
+            imageUrl: p.imageUrl,
+            rating: p.rating,
+            location: p.location,
+            descriptionLocalized: p.descriptionLocalized,
+            commentCount: p.commentCount,
+            latitude: p.latitude,
+            longitude: p.longitude,
+            price: p.price,
+            openingTime: p.openingTime,
+            website: p.website,
+            comments: comments,
+          );
+          _places[idx] = updated;
+        }
+      } catch (e) {
+        debugPrint('Failed to load comments for place ${place.id}: $e');
+        // Continue loading other places
+      }
+    }
+    notifyListeners();
   }
 
   /// Refresh data

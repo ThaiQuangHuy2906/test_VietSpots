@@ -47,6 +47,7 @@ class ApiException implements Exception {
 class ApiService {
   final http.Client _client;
   String? _userId;
+  String? _accessToken;
 
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
@@ -55,11 +56,17 @@ class ApiService {
     _userId = userId;
   }
 
+  /// Set access token for Supabase authentication
+  void setAccessToken(String? token) {
+    _accessToken = token;
+  }
+
   /// Common headers
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     if (_userId != null) 'X-User-ID': _userId!,
+    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
   };
 
   /// GET request
@@ -138,8 +145,11 @@ class ApiService {
     final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
     final request = http.MultipartRequest('POST', uri);
 
-    // Add headers
-    request.headers.addAll({if (_userId != null) 'X-User-ID': _userId!});
+    // Add headers - include both X-User-ID and Authorization Bearer token
+    request.headers.addAll({
+      if (_userId != null) 'X-User-ID': _userId!,
+      if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+    });
 
     // Add files
     for (final file in files) {

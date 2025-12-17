@@ -45,8 +45,9 @@ class AuthProvider with ChangeNotifier {
 
       if (response.success && response.session != null) {
         _session = response.session;
-        // Set user ID in API service for authenticated requests
+        // Set user ID and access token in API service for authenticated requests
         _apiService.setUserId(response.session!.user.id);
+        _apiService.setAccessToken(response.session!.accessToken);
         _user = UserModel(
           id: response.session!.user.id,
           name: response.session!.user.displayName ?? 'User',
@@ -106,8 +107,9 @@ class AuthProvider with ChangeNotifier {
         if (response.session != null) {
           // Auto login after registration
           _session = response.session;
-          // Set user ID in API service for authenticated requests
+          // Set user ID and access token in API service for authenticated requests
           _apiService.setUserId(response.session!.user.id);
+          _apiService.setAccessToken(response.session!.accessToken);
           _user = UserModel(
             id: response.session!.user.id,
             name: response.session!.user.displayName ?? displayName ?? 'User',
@@ -177,7 +179,20 @@ class AuthProvider with ChangeNotifier {
     try {
       // Update on server if logged in with Supabase
       if (_session != null) {
+        // Update auth metadata (displayName, avatarUrl)
         await _authService.updateUser(displayName: name, avatarUrl: avatarUrl);
+
+        // Update user profile data (phone, age, gender) to Supabase users table
+        await _apiService.post(
+          '/users/${_session!.user.id}/profile',
+          body: {
+            if (name != null) 'name': name,
+            if (phone != null) 'phone': phone,
+            if (age != null) 'age': age,
+            if (gender != null) 'gender': gender,
+            if (avatarUrl != null) 'avatar_url': avatarUrl,
+          },
+        );
       }
 
       // Update local state
@@ -245,8 +260,9 @@ class AuthProvider with ChangeNotifier {
   /// Logout
   Future<void> logout() async {
     await _authService.signOut();
-    // Clear user ID from API service
+    // Clear user ID and access token from API service
     _apiService.setUserId(null);
+    _apiService.setAccessToken(null);
     _user = null;
     _session = null;
     _status = AuthStatus.unauthenticated;

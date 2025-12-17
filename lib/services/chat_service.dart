@@ -24,6 +24,31 @@ class ChatRequest {
   };
 }
 
+/// Chat message save request
+class ChatMessageSaveRequest {
+  final String sessionId;
+  final String userId;
+  final String message;
+  final bool isUser;
+  final DateTime timestamp;
+
+  ChatMessageSaveRequest({
+    required this.sessionId,
+    required this.userId,
+    required this.message,
+    required this.isUser,
+    required this.timestamp,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
+    'user_id': userId,
+    'message': message,
+    'is_user': isUser,
+    'timestamp': timestamp.toIso8601String(),
+  };
+}
+
 /// Chat response model
 class ChatResponse {
   final String answer;
@@ -116,7 +141,7 @@ class ChatService {
     final response = await _api.post(
       '/chat',
       body: request.toJson(),
-      timeout: const Duration(seconds: 90),
+      timeout: const Duration(seconds: 120),
     );
     debugPrint('🔍 Chat API Response: $response');
     debugPrint('🔍 Response type: ${response.runtimeType}');
@@ -145,5 +170,33 @@ class ChatService {
     return (response['itineraries'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>() ??
         [];
+  }
+
+  /// POST /chat/messages - Save chat message to Supabase
+  Future<ApiResponse> saveMessage(ChatMessageSaveRequest request) async {
+    try {
+      final response = await _api.post(
+        '/chat/messages',
+        body: request.toJson(),
+      );
+      return ApiResponse.fromJson(response, null);
+    } catch (e) {
+      debugPrint('Failed to save chat message: $e');
+      return ApiResponse.fromJson({
+        'success': false,
+        'message': e.toString(),
+      }, null);
+    }
+  }
+
+  /// GET /chat/messages/{session_id} - Load chat messages from Supabase
+  Future<List<Map<String, dynamic>>> loadMessages(String sessionId) async {
+    try {
+      final response = await _api.get('/chat/messages/$sessionId');
+      return (response as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+    } catch (e) {
+      debugPrint('Failed to load chat messages: $e');
+      return [];
+    }
   }
 }

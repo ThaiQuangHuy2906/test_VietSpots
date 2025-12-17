@@ -46,7 +46,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   .localizedName(locale)
                   .toLowerCase()
                   .contains(query.toLowerCase()) ||
-              place.location.toLowerCase().contains(query.toLowerCase());
+              place.location.toLowerCase().contains(query.toLowerCase()) ||
+              (place.location.isNotEmpty &&
+                  place.location.toLowerCase().contains(query.toLowerCase()));
         }).toList();
       }
     });
@@ -107,53 +109,74 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _filteredPlaces.length,
-        itemBuilder: (context, index) {
-          final place = _filteredPlaces[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 2,
-            color: Theme.of(
-              context,
-            ).cardColor, // Ensure card color matches theme
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  place.imageUrl,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.image_not_supported, size: 40),
-                ),
+      body: _filteredPlaces.isEmpty && _searchController.text.isNotEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Không tìm thấy địa điểm',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Thử tìm kiếm với từ khóa khác',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  ),
+                ],
               ),
-              title: Text(
-                place.localizedName(locale),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                place.location,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PlaceDetailScreen(place: place),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _filteredPlaces.length,
+              itemBuilder: (context, index) {
+                final place = _filteredPlaces[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                  color: Theme.of(
+                    context,
+                  ).cardColor, // Ensure card color matches theme
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        place.imageUrl,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.image_not_supported, size: 40),
+                      ),
+                    ),
+                    title: Text(
+                      place.localizedName(locale),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      place.location,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PlaceDetailScreen(place: place),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }

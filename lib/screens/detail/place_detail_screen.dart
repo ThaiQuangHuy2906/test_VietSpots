@@ -27,6 +27,7 @@ class PlaceDetailScreen extends StatefulWidget {
 }
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
+  List<PlaceComment> _localComments = [];
   @override
   void initState() {
     super.initState();
@@ -48,10 +49,43 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       final dtos = await service.getPlaceComments(widget.place.id, limit: 20);
       final comments = dtos.map((d) => d.toPlaceComment()).toList();
       if (mounted) {
-        Provider.of<PlaceProvider>(
-          context,
-          listen: false,
-        ).setComments(widget.place.id, comments);
+        final provider = Provider.of<PlaceProvider>(context, listen: false);
+        final contains = provider.places.any((p) => p.id == widget.place.id);
+        if (contains) {
+          provider.setComments(widget.place.id, comments);
+        } else {
+          // Place not present in provider lists (e.g. came from Chat suggestions).
+          // Keep comments locally so this screen can display them.
+          setState(() {
+            _localComments = comments;
+          });
+        }
+      }
+      // Fallback: if backend reports reviews but we got no items, retry with larger limit
+      if (comments.isEmpty && widget.place.commentCount > 0) {
+        try {
+          final retryLimit = widget.place.commentCount.clamp(5, 200);
+          final dtos2 = await service.getPlaceComments(
+            widget.place.id,
+            limit: retryLimit,
+          );
+          final comments2 = dtos2.map((d) => d.toPlaceComment()).toList();
+          if (mounted && comments2.isNotEmpty) {
+            final provider = Provider.of<PlaceProvider>(context, listen: false);
+            final contains = provider.places.any(
+              (p) => p.id == widget.place.id,
+            );
+            if (contains) {
+              provider.setComments(widget.place.id, comments2);
+            } else {
+              setState(() {
+                _localComments = comments2;
+              });
+            }
+          }
+        } catch (e) {
+          debugPrint('Retry fetch comments failed for ${widget.place.id}: $e');
+        }
       }
     } catch (e) {
       // Silently ignore
@@ -181,6 +215,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     fit: BoxFit.cover,
                     placeholder: (context, url) =>
                         Container(color: Colors.grey[300]),
+                    errorWidget: (context, url, error) =>
+                        Container(color: Colors.grey[300]),
                   ),
                   Container(color: Colors.black26),
                 ],
@@ -303,12 +339,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  SelectableText(
-                    widget.place.localizedDescription(locale),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(height: 1.8, fontSize: 15),
-                  ),
+                  _buildAboutSection(widget.place.localizedDescription(locale)),
                   const SizedBox(height: 20),
 
                   // Location map preview
@@ -359,11 +390,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                       width: double.infinity,
                       child: FlutterMap(
                         options: MapOptions(
-                          center: LatLng(
+                          initialCenter: LatLng(
                             widget.place.latitude,
                             widget.place.longitude,
                           ),
-                          zoom: 14.0,
+                          initialZoom: 14.0,
                         ),
                         children: [
                           TileLayer(
@@ -379,7 +410,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                                 ),
                                 width: 40,
                                 height: 40,
-                                builder: (ctx) => const Icon(
+                                child: const Icon(
                                   Icons.location_on,
                                   color: Colors.red,
                                   size: 36,
@@ -483,11 +514,14 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                         (e) => e.id == widget.place.id,
                         orElse: () => widget.place,
                       );
-                      if (p.comments.isEmpty) {
+                      final commentsToShow = p.comments.isNotEmpty
+                          ? p.comments
+                          : _localComments;
+                      if (commentsToShow.isEmpty) {
                         return Text(loc.translate('no_reviews_yet'));
                       }
                       return Column(
-                        children: p.comments.reversed.map((c) {
+                        children: commentsToShow.reversed.map((c) {
                           final imagePath = c.imagePath;
                           return ListTile(
                             leading: CircleAvatar(
@@ -567,6 +601,12 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                                               height: 160,
                                               width: double.infinity,
                                               fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => const SizedBox.shrink(),
                                             );
                                           } catch (_) {
                                             return const SizedBox.shrink();
@@ -608,6 +648,132 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildAboutSection(String raw) {
+    final parsed = _tryParseMapLikeString(raw);
+    if (parsed is Map<String, dynamic>) {
+      // Filter out empty maps
+      final entries = parsed.entries.where((e) {
+        final v = e.value;
+        if (v == null) return false;
+        if (v is String && v.trim().isEmpty) return false;
+        if (v is Map && v.isEmpty) return false;
+        if (v is List && v.isEmpty) return false;
+        return true;
+      }).toList();
+
+      if (entries.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: entries.map((e) {
+          final key = _humanizeKey(e.key.toString());
+          final val = e.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  key,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                _renderValue(val),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    // Fallback: raw text
+    return SelectableText(
+      raw,
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(height: 1.8, fontSize: 15),
+    );
+  }
+
+  Widget _renderValue(dynamic v) {
+    if (v == null) {
+      return const Text('-');
+    }
+    if (v is String) {
+      return Text(v, style: Theme.of(context).textTheme.bodyLarge);
+    }
+    if (v is num || v is bool) {
+      return Text(v.toString(), style: Theme.of(context).textTheme.bodyLarge);
+    }
+    if (v is List) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: v
+            .map(
+              (it) => Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Text(
+                  '• ${it.toString()}',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+            )
+            .toList(),
+      );
+    }
+    if (v is Map) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: v.entries
+            .map(
+              (kv) => Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Text(
+                  '${_humanizeKey(kv.key.toString())}: ${kv.value}',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+            )
+            .toList(),
+      );
+    }
+    return Text(v.toString(), style: Theme.of(context).textTheme.bodyLarge);
+  }
+
+  String _humanizeKey(String key) {
+    // Simple humanization: replace underscores, camelCase -> words, capitalize
+    var s = key.replaceAll('_', ' ');
+    s = s.replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (m) => '${m[1]} ${m[2]}');
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
+  dynamic _tryParseMapLikeString(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return null;
+    try {
+      if (s.startsWith('{') || s.startsWith('[')) {
+        try {
+          return json.decode(s);
+        } catch (_) {
+          var norm = s.replaceAll("'", '"');
+          norm = norm
+              .replaceAll('True', 'true')
+              .replaceAll('False', 'false')
+              .replaceAll('None', 'null');
+          return json.decode(norm);
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
   }
 }
 
@@ -826,6 +992,13 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
                             width: 72,
                             height: 72,
                             fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  width: 72,
+                                  height: 72,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.broken_image),
+                                ),
                           ),
                         ),
                       ],
